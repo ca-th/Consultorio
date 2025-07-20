@@ -2,13 +2,13 @@
 
 ## Descrição do Projeto
 
-Sistema completo de agendamento médico desenvolvido para facilitar o gerenciamento de consultas, especialidades e atendimentos. A aplicação integra um chatbot inteligente via WhatsApp para melhorar a experiência do usuário e automatizar processos de agendamento.
+Sistema completo de agendamento médico desenvolvido para facilitar o gerenciamento de consultas, especialidades e atendimentos. A aplicação integra um chatbot inteligente para melhorar a experiência do usuário e automatizar processos de agendamento.
 
 ## Tecnologias Utilizadas
 
 - **Backend**: Python com CRUD de atendimentos, especialidades e médicos
-- **Integração**: WhatsApp API para comunicação automatizada
-- **Chatbot**: Sistema de diálogo inteligente com fluxo personalizado
+- **Integração**: FastApi
+- **Chatbot**: Sistema de diálogo inteligente com fluxo personalizado com Rasa
 - **Banco de Dados**: MySQL para modelagem e armazenamento de dados
 - **Frontend**: React e CSS
 - **Componentes**: Interfaces de chat e telas de agendamento responsivas
@@ -44,7 +44,7 @@ Sistema robusto de gerenciamento com endpoints para:
 - Gestão de especialidades e médicos
 - Arquitetura e estruturação do sistema
 
-### Chatbot IA - Luis H
+### Chatbot IA - Catharina, Darla, Gustavo e Luciana
 **Responsabilidades:**
 - Implementação do chatbot
 - Fluxo de diálogo para agendamento
@@ -82,11 +82,15 @@ Sistema robusto de gerenciamento com endpoints para:
 git clone [url-do-repositorio]
 
 # Backend (Python)
-cd backend
-pip install -r requirements.txt
-python app.py
-
+cd projeto-IA-final (duas vezes)
+cd Backend
+pip install uvicorn
+ativar o ven: source venv/Scripts/active(no git bash)
+ao ativar o ven, usar o comando de instalação novamente: pip install uvicorn
+executar: uvicorn main:app --reload ou uvicorn Backend.main:app --reload (recomendado)
+Se der erro, saia da pasta Backend e rode algum dos comandos de executar novamente
 # Frontend (React)
+cd projeto-IA-final (duas vezes)
 cd frontend
 cd projeto-react
 npm install (se for necessário)
@@ -96,3 +100,42 @@ npm start
 # Banco de Dados
 # Configure as credenciais MySQL
 # Execute os scripts de SQL
+
+# Instalação do Rasa Pro
+
+cd rasa
+
+# Crie um ambiente virtual
+python -m venv venv
+
+# Ative o ambiente virtual
+.\venv\Scripts\activate
+
+# Instale o package manager do uv
+# macOS e Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Instale o uv
+pip install uv
+
+# Atualize o pip pra versão mais recente
+python -m pip install --upgrade pip
+
+# Instale o Rasa Pro
+uv pip install rasa-pro
+
+# Crie um ambiente virtual
+python -m venv venv
+
+# Ative a licença do Rasa Pro (O Hash está no arquivo .env na pasta rasa)
+# macOS e Linux
+export RASA_PRO_LICENSE=YOUR_LICENSE_KEY
+
+# Windows
+set RASA_PRO_LICENSE=YOUR_LICENSE_KEY
+
+# Verifique a instalação
+rasa --version
