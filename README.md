@@ -90,6 +90,7 @@ instalar os pacotes: pip install -r requirements.txt
 ao ativar o ven, usar o comando de instalação novamente: pip install uvicorn
 executar: uvicorn main:app --reload ou uvicorn Backend.main:app --reload (recomendado)
 Se der erro, saia da pasta Backend e rode algum dos comandos de executar novamente
+
 # Frontend (React)
 cd projeto-IA-final (duas vezes)
 cd frontend
