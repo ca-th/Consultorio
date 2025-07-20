@@ -1,13 +1,11 @@
-print("###### ESTOU NO ARQUIVO MAIN.PY MODIFICADO! ######")
-
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from Backend import models # IMPORTAÇÃO ABSOLUTA
-from Backend import crud   # IMPORTAÇÃO ABSOLUTA
-from Backend import schemas # IMPORTAÇÃO ABSOLUTA
-from Backend.database import engine, Base, get_db # IMPORTAÇÃO ABSOLUTA
+from Backend import models 
+from Backend import crud   
+from Backend import schemas 
+from Backend.database import engine, Base, get_db 
 
 app = FastAPI()
 

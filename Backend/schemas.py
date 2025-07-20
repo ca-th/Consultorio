@@ -1,9 +1,6 @@
-# Exemplo de schemas.py, adapte se você tiver importações de models aqui
 from pydantic import BaseModel
 from datetime import datetime
 
-# Se você tiver algo como 'from models import Usuario' aqui, mude para:
-# from Backend.models import Usuario
 
 class UsuarioBase(BaseModel):
     nome: str

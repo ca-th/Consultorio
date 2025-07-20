@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from Backend.database import Base # IMPORTAÇÃO ABSOLUTA COM NOME DO PACOTE
+from Backend.database import Base # importaçao com o nome do pacote, para evitar conflitos
 
 class Usuario(Base):
     __tablename__ = "usuarios"
