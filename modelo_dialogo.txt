@@ -1,0 +1,44 @@
+Bot> Introdução ao usuário
+
+Bot> Coleta de dados, nome e CPF (banco de dados/verificação de existência de cadastro)
+
+	Caso não tenha cadastro: 
+	
+	Bot> Para continuar seu atendimento precisamos realizar seu cadastro
+	Bot> Informe o seu número de telefone, email, endereço (banco de dados)
+	Bot> Cadastro realizado com sucesso!
+
+Bot> Pergunta o que o usuário deseja fazer? (marcar consulta, verificar horário de consulta, perguntar sobre especialidades, tirar dúvidas - possivelmente, verificar cadastro)
+
+Usuário> Quero marcar uma consulta
+	
+	Bot> Em quais das seguintes especialidades deseja marcar sua consulta? (cita especialidades)
+	Usuário> Informa a especialidade desejada
+
+	Bot> Qual dia e horário teria disponibilidade para realizar sua consulta?
+    Usuário> Informa o dia e horário
+
+        Se dia disponível:
+        
+        Bot> utter_confirm_schedule (confirmar especialidade e data/horário com usuário)
+
+        Se dia não disponível:
+
+        Bot> utter_date_not_available (diz que o dia já está agendado e sugere datas/horários disponíveis)
+
+Usuário> Quero saber as especialidades disponíveis
+
+    Bot> Nossas especialidades disponíveis são: ... (com datas e horários disponíveis)
+
+Usuário> Quero verificar meu cadastro
+
+    Bot> Suas informações cadastradas no sistema são: Nome, CPF, número de telefone, endereço, email
+    Bot> Deseja alterar alguma informação?
+
+    Se quiser alterar algo:
+
+    Usuário> Desejo alterar ...
+
+    Se não quiser alterar nada:
+
+    Bot> Com o que mais posso te ajudar?

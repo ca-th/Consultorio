@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primaryColor: #C5A57D;
+            --secondaryColor: #42000B;
+            --accentColor: #7A3D18;
+            --mainTxtColor: #ffffff;
+            --lightTxtColor: #FFF;
+            --btnTxtColor: #FFF;
+            --fs-header: 24px;
+            --fw-header: 700;
+            --fw-body: 400;
+        }
+
+        body {
+            background-color: var(--primaryColor);
+            font-family: "Poppins", sans-serif;
+            color: var(--mainTxtColor);
+            margin: 0;
+            padding: 0;
+        }
+
+        .scheduling-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative; /* Adicionado para posicionamento absoluto do back-link */
+        }
+
+        .header {
+            font-size: var(--fs-header);
+            font-weight: var(--fw-header);
+            margin-bottom: 20px;
+            color: var(--btnTxtColor);
+            position: relative;
+            z-index: 1;
+        }
+
+        .chatbot-container {
+            background-color: var(--secondaryColor);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            display: none;
+            flex-direction: column;
+            position: relative;
+            z-index: 1001; /* Aumentado para sobrepor outros elementos */
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .chatbot-body {
+            font-size: var(--fs-body);
+            font-weight: var(--fw-body);
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .chatbot-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .chatbot-input button {
+            background-color: var(--primaryColor);
+            color: var(--btnTxtColor);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .chatbot-input button:hover {
+            color: var(--secondaryColor);
+            background-color: var(--mainTxtColor);
+        }
+
+        .magic-button {
+            background-color: var(--btnTxtColor);
+            color: var(--primaryColor);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .magic-button:hover {
+            background-color: var(--secondaryColor);
+        }
+
+        .text-right {
+            text-align: right;
+            margin: 5px 0;
+        }
+
+        .text-left {
+            color: var(--secondaryColor);
+            text-align: left;
+            margin: 5px 0;
+        }
+
+        .typing-indicator {
+            width: 20px;
+            height: 20px;
+            background-color: var(--secondaryColor);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        .informations {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Estilos para o link de voltar */
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--lightTxtColor);
+            font-size: 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 1002; /* Acima do chatbot */
+        }
+
+        .back-link:hover {
+            color: var(--accentColor);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scheduling-page">
+        <a href="./Site.html" class="back-link" id="backLink">
+            &#8592; Voltar
+        </a>
+
+        <div class="header" id="schedulingHeader">Bem Vindo(a) ao Agendamento Consultório Saúde +</div>
+        <div class="chatbot-container card" id="chatbotContainer">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Chatbot</h3>
+                <button class="btn btn-sm btn-danger" id="closeChatbot">X</button>
+            </div>
+            <div class="card-body chatbot-body">
+                <p class="text-left">Bem-vindo(a)! Sou a IA Catharina, digite oi para começarmos.</p>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="userInput" placeholder="Digite sua mensagem...">
+                <button id="sendButton">Enviar</button>
+            </div>
+        </div>
+
+        <div class="informations" id="informationsText">
+            <section>
+                Para iniciarmos, fale em nosso chat clicando no botão começar.
+            </section>
+        </div>
+
+        <button class="magic-button" id="magicButton">Começar</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.getElementById('magicButton').addEventListener('click', function() {
+            const chatbotContainer = document.getElementById('chatbotContainer');
+            const schedulingHeader = document.getElementById('schedulingHeader');
+            const informationsText = document.getElementById('informationsText');
+            const magicButton = document.getElementById('magicButton');
+            const backLink = document.getElementById('backLink'); // Obtenha o link de voltar
+
+            // Toggle display for chatbot container
+            const isChatbotVisible = chatbotContainer.style.display === 'flex';
+            chatbotContainer.style.display = isChatbotVisible ? 'none' : 'flex';
+
+            // Hide/show other elements based on chatbot visibility
+            schedulingHeader.style.display = isChatbotVisible ? 'block' : 'none';
+            informationsText.style.display = isChatbotVisible ? 'block' : 'none';
+            magicButton.style.display = isChatbotVisible ? 'block' : 'none';
+            backLink.style.display = isChatbotVisible ? 'flex' : 'none'; // Mostrar/ocultar o link de voltar
+        });
+
+        document.getElementById('closeChatbot').addEventListener('click', function() {
+            const chatbotContainer = document.getElementById('chatbotContainer');
+            const schedulingHeader = document.getElementById('schedulingHeader');
+            const informationsText = document.getElementById('informationsText');
+            const magicButton = document.getElementById('magicButton');
+            const backLink = document.getElementById('backLink'); // Obtenha o link de voltar
+
+            chatbotContainer.style.display = 'none';
+            schedulingHeader.style.display = 'block';
+            informationsText.style.display = 'block';
+            magicButton.style.display = 'block';
+            backLink.style.display = 'flex'; // Mostrar o link de voltar ao fechar
+        });
+
+        let schedulingStep = 0;
+        let selectedService = '';
+        let selectedDate = '';
+        let selectedTime = '';
+
+        document.getElementById('sendButton').addEventListener('click', function() {
+            const userInput = document.getElementById('userInput').value.trim();
+            const chatbotBody = document.querySelector('.chatbot-body');
+
+            if (userInput !== '') {
+                const userMessage = document.createElement('p');
+                userMessage.textContent = userInput;
+                userMessage.classList.add('text-right');
+                chatbotBody.appendChild(userMessage);
+
+                const typingIndicator = document.createElement('div');
+                typingIndicator.classList.add('typing-indicator');
+                chatbotBody.appendChild(typingIndicator);
+
+                chatbotBody.scrollTop = chatbotBody.scrollHeight; // Scroll to bottom immediately after user message
+
+                setTimeout(() => {
+                    typingIndicator.remove();
+
+                    let botResponse = '';
+
+                    if (userInput === '4') {
+                        // Clear chat and reset to main menu
+                        chatbotBody.innerHTML = '<p class="text-left">Bem-vindo(a)! Sou a IA Catharina, digite oi para começarmos.</p>';
+                        schedulingStep = 0;
+                        return;
+                    }
+
+                    if (schedulingStep === 0) {
+                        switch (userInput.toLowerCase()) {
+                            case '1':
+                                botResponse = 'Horários de Funcionamento: Segunda a Sexta: 8h às 18h, Sábado: 8h às 12h.';
+                                break;
+                            case '2':
+                                botResponse = 'Serviços: \n- Consulta Geral (Dr. João Silva)\n- Pediatria (Dra. Maria Oliveira)\n- Cardiologia (Dr. Carlos Mendes)\n- Dermatologia (Dra. Ana Souza)';
+                                break;
+                            case '3':
+                                botResponse = 'Escolha o serviço que deseja agendar:\n1) Consulta Geral\n2) Pediatria\n3) Cardiologia\n4) Dermatologia';
+                                schedulingStep = 1;
+                                break;
+                            default:
+                                botResponse = '\nEscolha uma opção: \n1) Horários de Funcionamento;\n\n2) Serviços, Horário e Médicos\n3) Agendamento\n4) Voltar ao Menu';
+                        }
+                    } else if (schedulingStep === 1) {
+                        switch (userInput.toLowerCase()) {
+                            case '1':
+                                selectedService = 'Consulta Geral';
+                                botResponse = 'Disponibilidade para Consulta Geral:\nSegunda a Sexta: 8h às 12h\nEscolha um dia:';
+                                break;
+                            case '2':
+                                selectedService = 'Pediatria';
+                                botResponse = 'Disponibilidade para Pediatria:\nSegunda a Sexta: 13h às 17h\nEscolha um dia:';
+                                break;
+                            case '3':
+                                selectedService = 'Cardiologia';
+                                botResponse = 'Disponibilidade para Cardiologia:\nTerça e Quinta: 9h às 15h\nEscolha um dia:';
+                                break;
+                            case '4':
+                                selectedService = 'Dermatologia';
+                                botResponse = 'Disponibilidade para Dermatologia:\nQuarta e Sexta: 10h às 16h\nEscolha um dia:';
+                                break;
+                            default:
+                                botResponse = 'Escolha um serviço válido:\n1) Consulta Geral\n2) Pediatria\n3) Cardiologia\n4) Dermatologia';
+                                schedulingStep = 1; // Stay on this step until valid input
+                        }
+                        if (selectedService) schedulingStep = 2; // Only advance if a service was selected
+                    } else if (schedulingStep === 2) {
+                        selectedDate = userInput;
+                        botResponse = `Escolha um horário para ${selectedService} no dia ${selectedDate}:`;
+                        schedulingStep = 3;
+                    } else if (schedulingStep === 3) {
+                        selectedTime = userInput;
+                        botResponse = `Confirme seu e-mail para agendar ${selectedService} no dia ${selectedDate} às ${selectedTime}:`;
+                        schedulingStep = 4;
+                    } else if (schedulingStep === 4) {
+                        const email = userInput;
+                        botResponse = `Agendamento confirmado para ${selectedService} no dia ${selectedDate} às ${selectedTime}. Um e-mail de confirmação foi enviado para ${email}.`;
+                        schedulingStep = 0;
+                        botResponse += '\n Escolha uma opção: \n1) Horários de Funcionamento\n2) Serviços, Horário e Médicos \n\n3) Agendamento\n4) Voltar ao Menu';
+                    }
+
+                    const botMessage = document.createElement('p');
+                    botMessage.textContent = botResponse;
+                    botMessage.classList.add('text-left');
+                    chatbotBody.appendChild(botMessage);
+
+                    // Check if we should offer to return to the main menu
+                    if (schedulingStep === 0 && !botResponse.startsWith('Bem-vindo!')) {
+                         const returnMenuOption = document.createElement('p');
+                         returnMenuOption.textContent = 'Para voltar ao menu principal, digite 4.';
+                         returnMenuOption.classList.add('text-left');
+                         chatbotBody.appendChild(returnMenuOption);
+                    }
+
+                    chatbotBody.scrollTop = chatbotBody.scrollHeight;
+                }, 1000); // Simulate typing for 1 second
+
+                document.getElementById('userInput').value = '';
+            }
+        });
+    </script>
+</body>
+</html>

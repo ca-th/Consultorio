@@ -1,0 +1,8 @@
+flows:
+  registration:
+    description: tell the user about his registration and asks if the user wants to change something
+    steps:
+      - action: utter_registration
+
+      - collect: change_registration
+        description: asks if the user wants to change something in his registration

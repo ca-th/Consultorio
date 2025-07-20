@@ -1,0 +1,21 @@
+/.qodo
+venv/
+
+.venv/
+# Ignorar Node.js dependencies
+node_modules/
+build/
+.env.local
+.env*.local
+
+# Ignorar Python virtual environment
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Ignorar arquivos de IDEs (opcional, mas recomendado)
+.idea/
+.vscode/
+*.swp

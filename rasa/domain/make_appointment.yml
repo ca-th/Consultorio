@@ -1,0 +1,22 @@
+version: "3.1"
+
+slots:
+  choose_specialty:
+    type: text
+    mappings: 
+      - type: from_llm
+
+  choose_time:
+    type: text
+    mappings:
+      - type: from_llm 
+
+responses:
+  utter_ask_choose_specialty:
+  - text: "Com qual especialidade deseja marcar sua consulta?"
+
+  utter_ask_choose_time:
+  - text: "Qual desses horários deseja realizar sua consulta?"
+
+  utter_appointment_scheduled:
+  - text: "Seu horário com o(a) Dr(a). especialista em {choose_specialty} foi marcado para {choose_time}"

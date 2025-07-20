@@ -1,0 +1,7 @@
+flows:
+  specialties:
+    description: the user wants to know what are the medical specialties
+    steps:
+      - collect: specialty
+        description: what medical specialty the user wants more information about
+      - action: utter_specialty_times
