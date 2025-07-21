@@ -1,0 +1,12 @@
+version: "3.1"
+nlu:
+  - intent: fornecer_cpf
+    examples: |
+      - meu CPF é [123.456.789-00](cadastro_pessoa_f)
+      - meu cadastro é [98765432100](cadastro_pessoa_f)
+      - o CPF é [000.111.222-33](cadastro_pessoa_f)
+      - meu número de documento é [44455566677](cadastro_pessoa_f)
+      # Adicione mais exemplos para o CPF
+      - meu cpf [111.222.333-44](cadastro_pessoa_f)
+      - [55566677788](cadastro_pessoa_f)
+      - é [99999999999](cadastro_pessoa_f)

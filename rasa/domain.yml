@@ -1,0 +1,214 @@
+# domain.yml (Arquivo principal, na raiz da pasta Rasa)
+
+version: "3.1"
+
+# -------------------------------------------------------------------------
+# Intents: Listagem de todas as intenções do seu bot
+# Adicione aqui todas as intenções que seu bot deve reconhecer.
+# As intenções devem vir de todos os arquivos NLU que você tem (e dos arquivos
+# da antiga pasta 'domain' se eles continham intenções).
+# Exemplo:
+# - agendar_consulta
+# - registrar
+# - ...
+# -------------------------------------------------------------------------
+intents:
+  - fornecer_cpf # Intenção para capturar o CPF
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - agendar_consulta # Exemplo: Adicione intenções relacionadas a agendamento
+  - iniciar_registro # Exemplo: Adicione intenções relacionadas a registro
+  - pedir_cadastro
+  - pedir_especialidades
+  # Adicione TODAS as outras intenções que você tem em seus arquivos NLU e de fluxo
+
+
+# -------------------------------------------------------------------------
+# Entities: Definição de entidades que o Rasa deve extrair da fala do usuário
+# Exemplo:
+# - data_agendamento
+# - especialidade
+# -------------------------------------------------------------------------
+entities:
+  - user_name
+  - cadastro_pessoa_f
+  - choose_specialty
+  - choose_time
+  - change_registration
+  - specialty
+  # Adicione outras entidades se você as tiver definido em outros arquivos
+
+
+# -------------------------------------------------------------------------
+# Slots: Variáveis de memória do bot para armazenar informações
+# Cada slot deve ser definido uma única vez com seu tipo e mapeamentos.
+# -------------------------------------------------------------------------
+slots:
+  user_name:
+    type: text
+    mappings:
+      - type: from_llm
+  cadastro_pessoa_f:
+    type: text
+    mappings:
+      - type: from_llm
+    validation:
+      rejections:
+        - if: not (slots.cadastro_pessoa_f matches "^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{11}$")
+          utter: utter_invalid_cpf
+      refill_utter: "utter_refill_cadastro_pessoa_f"
+  user_exists:
+    type: bool
+    mappings:
+      - type: controlled
+  choose_specialty:
+    type: text
+    mappings:
+      - type: from_llm
+  choose_time:
+    type: text
+    mappings:
+      - type: from_llm
+  change_registration:
+    type: text
+    mappings:
+      - type: from_llm
+  specialty:
+    type: text
+    mappings:
+      - type: from_llm
+  # Adicione quaisquer outros slots que você possa ter definido em outros arquivos
+
+
+# -------------------------------------------------------------------------
+# Actions: Ações que o bot pode executar (customizadas ou respostas)
+# -------------------------------------------------------------------------
+actions:
+  - action_check_existing_user
+  # Adicione aqui quaisquer outras ações customizadas ou de validação
+  # Exemplo: - action_make_appointment
+
+
+# -------------------------------------------------------------------------
+# Responses: Mensagens predefinidas que o bot pode enviar ao usuário
+# Todas as suas 'utter_' respostas devem estar listadas aqui.
+# -------------------------------------------------------------------------
+responses:
+  utter_greet_user:
+    - text: "Olá seja bem-vindo ao nosso atendimento inteligente de agendamento de consultas!"
+  utter_ask_user_name:
+    - text: "Você poderia me informar seu nome?"
+  utter_ask_cadastro_pessoa_f:
+    - text: "Agora seu CPF, por favor."
+  utter_inexistant_user:
+    - text: "Esse usuário não possui uma conta, vamos realizar o seu registro"
+  utter_invalid_cpf:
+    - text: "CPF inválido"
+  utter_refill_cadastro_pessoa_f:
+    - text: "Digite um CPF válido"
+  utter_introduce_user:
+    - text: |
+        Seja bem vindo a nossa plataforma {user_name}
+        Com o que posso te ajudar hoje?
+        Sou capaz de te auxiliar com diversas coisas, seja com suas consultas, seu cadastro e eventuais dúvidas sobre nossas especialidades.
+
+  # Respostas relacionadas a Agendamento (de um arquivo como 'appointment.yml' ou 'make_appointment.yml')
+  utter_appointments:
+    - text: "Suas consultas agendadas são ..."
+  utter_ask_choose_specialty:
+    - text: "Com qual especialidade deseja marcar sua consulta?"
+  utter_ask_choose_time:
+    - text: "Qual desses horários deseja realizar sua consulta?"
+  utter_appointment_scheduled:
+    - text: "Seu horário com o(a) Dr(a). especialista em {choose_specialty} foi marcado para {choose_time}"
+
+  # Respostas relacionadas a Cadastro (de um arquivo como 'registration.yml')
+  utter_registration:
+    - text: |
+        {user_name} seu cadastro é:
+        CPF: {cadastro_pessoa_f}
+        Data de nascimento: ...
+        Número de telefone: ...
+  utter_ask_change_registration:
+    - text: "Você quer mudar alguma informação do seu cadastro"
+  utter_can_do_something_else:
+    - text: "O que mais posso fazer por você?"
+
+  # Respostas relacionadas a Especialidades (de um arquivo como 'specialties.yml')
+  utter_ask_specialty:
+    - text: |
+        De qual dessas especialidades deseja mais informações?
+
+        - Cardiologia
+        - Neurologia
+        - Nefrologia
+        - Psiquiatria
+        - Ginecologia
+  utter_specialty_times:
+    - text: "O horário de atendimento para {specialty} é ......."
+
+
+# -------------------------------------------------------------------------
+# Forms: Definição de formulários (se você usa)
+# Exemplo:
+# forms:
+#   appointment_form:
+#     required_slots:
+#       - specialty
+#       - date
+#       - time
+# -------------------------------------------------------------------------
+forms:
+  # Adicione quaisquer formulários que você tenha
+
+
+# -------------------------------------------------------------------------
+# Rules: Definição de regras de diálogo (se você usa)
+# Exemplo:
+# rules:
+#   - rule: Say goodbye anytime the user says goodbye
+#     steps:
+#       - intent: goodbye
+#       - action: utter_goodbye
+# -------------------------------------------------------------------------
+rules:
+  # Adicione quaisquer regras que você tenha
+
+
+# -------------------------------------------------------------------------
+# Flows: Definição de fluxos de diálogo (se você usa)
+# IMPORTANTE: Seus arquivos em data/flows já definem fluxos.
+# Apenas adicione aqui os flows que você definir diretamente no domain.yml
+# e que não estão em data/flows. O flow 'greet_user' abaixo é um exemplo
+# de como ele se pareceria se estivesse diretamente no domain.yml.
+# NO SEU CASO, se 'greet_user' já está em data/flows/greet_user.yml,
+# você pode remover esta seção 'flows:' do domain.yml se não tiver
+# outros flows definidos aqui. Geralmente, 'flows' ficam em data/flows.
+# Mas como você colocou o conteúdo dele no exemplo anterior, estou mantendo-o aqui.
+# -------------------------------------------------------------------------
+flows:
+  greet_user:
+    description: Flow for starting the conversation and greet the user, and verify existing user.
+    steps:
+      - action: utter_greet_user
+      - collect: user_name
+        description: collect the name of the user
+      - collect: cadastro_pessoa_f
+        description: an identification 11 digits number
+      - action: action_check_existing_user
+        next:
+          - if: not slots.user_exists
+            then:
+            - action: utter_inexistant_user
+              next: END
+          - else: introduce_user
+            id: introduce_user
+      - action: utter_introduce_user
+        id: introduce_user
+        next: END
+  # Se você tiver outros flows em outros arquivos em data/flows,
+  # não os adicione aqui. Apenas flows que você quer definir *diretamente* no domain.yml.
+  # Se todos os seus flows estiverem em data/flows, você pode remover a seção 'flows:'
+  # inteira daqui.
