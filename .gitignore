@@ -1,6 +1,7 @@
 /.qodo
 venv/
 
+.env
 .venv/
 # Ignorar Node.js dependencies
 node_modules/

@@ -96,3 +96,4 @@ npm start
 # Banco de Dados
 # Configure as credenciais MySQL
 # Execute os scripts de SQL
+
