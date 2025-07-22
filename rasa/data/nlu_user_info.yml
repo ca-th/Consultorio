@@ -1,10 +1,7 @@
-# data/nlu.yml
-
 version: "3.1"
 
 nlu:
   # --- INTENÇÃO EXISTENTE (fornecer_cpf) ---
-  # Mantenha esta intenção se ela for relevante para o seu bot.
   - intent: fornecer_cpf
     examples: |
       - meu CPF é [123.456.789-00](cadastro_pessoa_f)
@@ -41,7 +38,7 @@ nlu:
       - sim
       - claro
       - com certeza
-      - isso
+      - - isso
       - uhum
       - de acordo
       - pode ser
@@ -55,6 +52,15 @@ nlu:
       - de forma alguma
       - nops
 
+  - intent: stop
+    examples: |
+      - parar
+      - cancelar
+      - interromper
+      - não quero mais
+      - esquece
+      - para o agendamento
+      - quero cancelar o agendamento
 
   # --- INTENÇÕES PARA O FORMULÁRIO DE AGENDAMENTO ---
   - intent: agendar_consulta
@@ -67,6 +73,9 @@ nlu:
       - gostaria de agendar uma consulta médica
       - marcar consulta com um médico
       - preciso de um agendamento
+      - quero marcar um horário com um médico
+      - agendar uma consulta
+      - marcar uma consulta de [cardiologia](especialidade)
 
   - intent: inform_especialidade
     examples: |
@@ -75,11 +84,12 @@ nlu:
       - um especialista em [gastroenterologia](especialidade)
       - quero um [pediatra](especialidade)
       - na área de [ortopedia](especialidade)
-      - pode ser [clínico generalista](especialidade)
+      - pode ser [clínico geral](especialidade)
       - para [odontologia](especialidade)
       - [consulta geral](especialidade)
       - [ginecologia](especialidade)
       - [urologia](especialidade)
+      - em [neurologia](especialidade)
 
   - intent: inform_data_hora
     examples: |
@@ -92,7 +102,7 @@ nlu:
       - às [9 da manhã](hora_consulta)
       - [14h30](hora_consulta)
       - no dia [primeiro de agosto](data_consulta)
-      - qual é o dia de hoje? # Adicionado este exemplo para melhorar a detecção
+      - qual é o dia de hoje?
 
   - intent: inform_nome_medico
     examples: |
@@ -115,15 +125,13 @@ nlu:
       - [sinto tonturas e cansaço](motivo_consulta)
       - [para check-up anual](motivo_consulta)
 
-  - intent: stop
+  - intent: inform_nome
     examples: |
-      - parar
-      - cancelar
-      - interromper
-      - não quero mais
-      - esquece
-      - para o agendamento
-      - quero cancelar o agendamento
+      - meu nome é [João](nome)
+      - sou [Maria da Silva](nome)
+      - me chamo [Pedro](nome)
+      - [Ana](nome)
+      - meu nome é [Carlos Eduardo](nome)
 
   # --- INTENÇÕES PARA INFORMAÇÕES DA CLÍNICA ---
   - intent: ask_horario_geral
@@ -139,14 +147,14 @@ nlu:
     examples: |
       - quais serviços vocês oferecem?
       - que especialidades têm?
-      - tipos de consulta
-      - quais os serviços disponíveis?
-      - qual tipo de médico vocês têm?
-      - quais são as especialidades
-      - tem consulta geral
-      - tem pediatria
-      - tem cardiologia
-      - tem dermatologia
+      - quais as especialidades?
+      - que tipo de atendimento vocês têm?
+      - me diga as especialidades que tem
+      - por favor, me fale os serviços disponíveis
+      - quais são os médicos disponíveis?
+      - vocês têm pediatria?
+      - quais as especialidades que a clínica oferece?
+      - quais os tipos de consulta?
 
   - intent: ask_horario_medico_especifico
     examples: |
@@ -189,7 +197,23 @@ nlu:
       - me passa o email de vocês?
       - qual o email para contato?
 
-  # --- NOVA INTENÇÃO PARA PERGUNTAS AO LLM EXTERNO ---
+  - intent: ask_exames
+    examples: |
+      - vocês fazem exames?
+      - quais exames a clínica oferece?
+      - que tipo de exame posso fazer?
+      - quais exames de rotina?
+      - posso agendar um exame?
+
+  - intent: ask_precos
+    examples: |
+      - qual o preço da consulta?
+      - quanto custa uma consulta?
+      - qual o valor da consulta?
+      - quanto custa o exame?
+      - preços das consultas
+
+  # --- INTENÇÃO PARA PERGUNTAS AO LLM EXTERNO ---
   - intent: perguntar_ao_llm
     examples: |
       - o que é inteligência artificial?

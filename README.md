@@ -111,7 +111,7 @@ cd rasa
 python -m venv venv
 
 # Ative o ambiente virtual
-.\venv\Scripts\activate ou source venv_py310/Scripts/activate
+.\venv\Scripts\activate ou source venv_py310/Scripts/activate(recomendado)
 
 # Instale o package manager do uv
 # macOS e Linux
@@ -141,3 +141,18 @@ set RASA_PRO_LICENSE=YOUR_LICENSE_KEY
 
 # Verifique a instalação
 rasa --version
+
+# Depois, em um terminal rode o comando
+rasa train
+
+# Quando finalizar o treinamento, rode o comando:
+rasa shell (onde vai abrir o chat)
+
+# Por fim, abre outro terminal, entre na pasta rasa e ative o ambiente e rode o comando:
+rasa run actions
+
+##IMPORTANTE: 
+
+##Não feche nenhum dos terminais enquanto estiver conversando com o bot. O primeiro terminal (rasa shell) é a sua interface de chat, e o segundo (rasa run actions) é o servidor que executa as ações personalizadas (como a interação com a LLM e o formulário de agendamento).
+
+##Para fechar, use Ctrl+C em ambos os terminais.

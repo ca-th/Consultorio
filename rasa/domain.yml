@@ -145,7 +145,7 @@ responses:
 
   # LLM
   utter_ask_llm:
-    - text: "Deixe-me pensar..."
+    - text: "Processando..."
   utter_debug_llm_call:
     - text: "DEBUG: Chamando LLM..."
 

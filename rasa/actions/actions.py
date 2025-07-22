@@ -1,23 +1,24 @@
-# actions.py
-
 from typing import Any, Text, Dict, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet, ActiveLoop, FollowupAction, AllSlotsReset
+from rasa_sdk.forms import FormValidationAction
 
 # Importar bibliotecas para Gemini e variáveis de ambiente
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv # Importa load_dotenv para carregar .env
+from dotenv import load_dotenv
 
-# Importa a classe FormValidationAction para validação de formulários (se você usa)
-from rasa_sdk.forms import FormValidationAction
+# Biblioteca para manipulação de datas
+from datetime import datetime, timedelta
+import dateparser
 
 # Carrega as variáveis de ambiente do arquivo .env
-# Certifique-se de ter um arquivo .env na raiz do seu projeto Rasa
-# com GEMINI_API_KEY="SUA_CHAVE_AQUI"
 load_dotenv()
 
+# ====================================================================
+# AÇÃO PERSONALIZADA PARA INTERAGIR COM O LLM (GEMINI)
+# ====================================================================
 class ActionPerguntarLLM(Action):
 
     def name(self) -> Text:
@@ -29,65 +30,57 @@ class ActionPerguntarLLM(Action):
     ) -> List[Dict[Text, Any]]:
         """
         Executa a lógica para enviar a pergunta do usuário ao modelo Gemini
-        e enviar a resposta de volta ao usuário.
+        e enviar a resposta de volta ao usuário, com um prompt de contexto.
         """
-        # Obtenha a última mensagem do usuário do tracker
         user_message = tracker.latest_message.get("text")
 
-        # Verifica se a mensagem do usuário não está vazia
         if not user_message:
             dispatcher.utter_message(text="Desculpe, não consegui entender sua pergunta.")
             return []
 
-        # Obtenha a chave da API do Gemini das variáveis de ambiente
         GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-        # Verifica se a chave da API foi configurada
         if not GEMINI_API_KEY:
             dispatcher.utter_message(text="Desculpe, a chave da API do Gemini não está configurada. Por favor, avise o desenvolvedor.")
             return []
 
-        # Configura a API do Gemini com a chave
         genai.configure(api_key=GEMINI_API_KEY)
-
-        # Inicializa o modelo Gemini (você pode escolher 'gemini-pro' ou outros modelos disponíveis)
         model = genai.GenerativeModel('gemini-1.5-flash')
 
         try:
-            # Envie uma mensagem inicial para o usuário enquanto o LLM processa
-            # Isso usa a resposta 'utter_ask_llm' definida no domain.yml
-            dispatcher.utter_message(response="utter_ask_llm")
+            # PROMPT DE CONTEXTUALIZAÇÃO PARA A LLM
+            system_prompt = (
+                "Você é um assistente virtual de agendamento de consultas médicas. "
+                "Seu principal objetivo é ajudar o usuário a agendar consultas, fornecendo informações "
+                "sobre especialidades, médicos, horários e procedimentos. "
+                "Responda apenas a perguntas relacionadas à saúde e agendamentos. "
+                "Se o usuário fizer uma pergunta não relacionada, gentilmente o redirecione para o agendamento."
+            )
+            
+            prompt_para_llm = f"{system_prompt}\n\nUsuário: {user_message}"
 
-            # Gera conteúdo usando o modelo Gemini
-            # O user_message é enviado como o prompt para o LLM
-            # Usamos await model.generate_content_async para chamadas assíncronas
-            response = await model.generate_content_async(user_message)
-            # Acessa o texto da resposta gerada pelo Gemini
+            dispatcher.utter_message(response="utter_ask_llm")
+            response = await model.generate_content_async(prompt_para_llm)
             llm_response = response.text
 
-            # Envia a resposta do LLM de volta ao usuário
-            dispatcher.utter_message(text=llm_response)
+            # Lógica de filtro para evitar alucinações e respostas irrelevantes
+            if any(palavra in llm_response.lower() for palavra in ["agendar", "marcar", "agendamento"]):
+                 dispatcher.utter_message(text=llm_response + "\n\nPara agendar sua consulta, por favor, me diga a especialidade desejada.")
+                 return [ActiveLoop(name="agendamento_consulta_form")]
+            else:
+                 dispatcher.utter_message(text=llm_response)
 
         except Exception as e:
-            # Captura e trata qualquer erro que ocorra durante a chamada à API do Gemini
-            dispatcher.utter_message(text=f"Desculpe, tive um problema ao tentar responder a sua pergunta com a IA. Erro: {e}")
-
-        # Retorna uma lista de eventos (aqui vazia, pois não alteramos slots, etc.
-        # Se precisar resetar slots ou ativar algo, adicione eventos aqui)
+            dispatcher.utter_message(text=f"Desculpe, tive um problema ao tentar responder a sua pergunta. Erro: {e}")
+            
         return []
 
-
 # ====================================================================
-# Ações de Validação de Formulário (MANTIDAS DO SEU CÓDIGO)
-# Adapte conforme suas necessidades de validação
+# AÇÕES DE VALIDAÇÃO DE FORMULÁRIO
 # ====================================================================
 class ValidateAgendamentoConsultaForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_agendamento_consulta_form"
-
-    # @staticmethod
-    # def especialidade_db() -> List[Text]:
-    #     return ["pediatria", "cardiologia", "dermatologia", "clinico geral"]
 
     def validate_especialidade(
         self,
@@ -97,12 +90,13 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `especialidade` value."""
-        if slot_value.lower() in ["pediatria", "cardiologia", "dermatologia", "clinico geral"]:
-            # validation succeeded, set the value of the "especialidade" slot to value
+        especialidades_disponiveis = ["pediatria", "cardiologia", "dermatologia", "clinico geral", "gastroenterologia", "ortopedia", "odontologia", "ginecologia", "urologia"]
+        
+        if slot_value.lower() in especialidades_disponiveis:
             return {"especialidade": slot_value}
         else:
-            dispatcher.utter_message(text=f"Não temos a especialidade de {slot_value}. Por favor, escolha entre Pediatria, Cardiologia, Dermatologia ou Clínico Geral.")
-            return {"especialidade": None} # Manter o slot vazio para pedir novamente
+            dispatcher.utter_message(text=f"Não temos a especialidade de {slot_value}. Por favor, escolha entre: Pediatria, Cardiologia, Dermatologia, Clínico Geral, Gastroenterologia, Ortopedia, Odontologia, Ginecologia ou Urologia.")
+            return {"especialidade": None}
 
     def validate_data_consulta(
         self,
@@ -111,13 +105,14 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
-        """Validate `data_consulta` value."""
-        # Implemente sua lógica de validação de data aqui
-        # Por exemplo, verificar se a data é futura ou em um formato válido
-        if len(slot_value) > 3: # Exemplo simples de validação
-            return {"data_consulta": slot_value}
+        """Validate `data_consulta` value and ensure it is in the future."""
+        # Usa dateparser para reconhecer datas em linguagem natural
+        parsed_date = dateparser.parse(slot_value)
+        
+        if parsed_date and parsed_date >= datetime.now() - timedelta(days=1):
+            return {"data_consulta": parsed_date.strftime("%d-%m-%Y")}
         else:
-            dispatcher.utter_message(text="Essa não parece ser uma data válida. Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho').")
+            dispatcher.utter_message(text="Essa não parece ser uma data válida ou é uma data no passado. Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho').")
             return {"data_consulta": None}
 
     def validate_hora_consulta(
@@ -127,12 +122,22 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
-        """Validate `hora_consulta` value."""
-        # Implemente sua lógica de validação de hora aqui
-        if "h" in slot_value: # Exemplo simples de validação
+        """Validate `hora_consulta` value and ensure it is in the correct format."""
+        try:
+            # Tenta converter o valor para um formato de hora para validação
+            if "h" in slot_value:
+                # Remove 'h' e tenta converter para um horário
+                hora_str = slot_value.replace("h", "").strip()
+                if len(hora_str) <= 2:
+                    datetime.strptime(hora_str, "%H")
+                else:
+                    datetime.strptime(hora_str, "%H:%M")
+            else:
+                # Se não tiver 'h', tenta outros formatos
+                datetime.strptime(slot_value, "%H:%M")
             return {"hora_consulta": slot_value}
-        else:
-            dispatcher.utter_message(text="Esse não parece ser um horário válido. Por favor, me diga a hora (ex: '10h da manhã', 'às 14h').")
+        except (ValueError, TypeError):
+            dispatcher.utter_message(text="Esse não parece ser um horário válido. Por favor, me diga a hora (ex: '10h da manhã', 'às 14:30').")
             return {"hora_consulta": None}
 
     def validate_nome_medico(
@@ -143,12 +148,10 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `nome_medico` value."""
-        # Implemente sua lógica de validação de nome do médico aqui
-        # Ex: verificar se o nome existe em uma lista de médicos
-        if len(slot_value) > 2: # Exemplo simples
+        if len(slot_value) >= 3 and slot_value.isalpha():
             return {"nome_medico": slot_value}
         else:
-            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido.")
+            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido (somente letras, no mínimo 3 caracteres).")
             return {"nome_medico": None}
 
     def validate_motivo_consulta(
@@ -159,10 +162,10 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `motivo_consulta` value."""
-        if len(slot_value) > 5: # Exemplo simples: motivo com mais de 5 caracteres
+        if len(slot_value) > 5:
             return {"motivo_consulta": slot_value}
         else:
-            dispatcher.utter_message(text="Por favor, descreva um pouco mais o motivo da sua consulta.")
+            dispatcher.utter_message(text="Por favor, descreva um pouco mais o motivo da sua consulta (mínimo de 6 caracteres).")
             return {"motivo_consulta": None}
 
 class ActionSubmitAgendamento(Action):
@@ -172,19 +175,14 @@ class ActionSubmitAgendamento(Action):
     def run(
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]
     ) -> List[Dict[Text, Any]]:
-        # Aqui você implementaria a lógica para salvar o agendamento
-        # em um banco de dados ou chamar uma API externa.
-
         especialidade = tracker.get_slot("especialidade")
         data_consulta = tracker.get_slot("data_consulta")
         hora_consulta = tracker.get_slot("hora_consulta")
         nome_medico = tracker.get_slot("nome_medico")
         motivo_consulta = tracker.get_slot("motivo_consulta")
 
-        # Exemplo de como você poderia usar as informações:
         print(f"Agendamento confirmado: Especialidade: {especialidade}, Data: {data_consulta}, Hora: {hora_consulta}, Médico: {nome_medico}, Motivo: {motivo_consulta}")
 
         dispatcher.utter_message(text="Ok, seu agendamento está quase pronto! Entraremos em contato em breve para confirmar os detalhes. Agradecemos a sua preferência.")
         
-        # Resetar os slots após o envio do formulário
         return [AllSlotsReset()]

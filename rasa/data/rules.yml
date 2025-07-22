@@ -73,10 +73,11 @@ rules:
     - intent: ask_horario_geral
     - action: utter_horario_geral
 
-- rule: Mostrar servicos
+# Regra que usa o LLM para responder sobre os serviços
+- rule: Usar LLM para serviços
   steps:
     - intent: ask_servicos
-    - action: utter_servicos_medicos
+    - action: action_perguntar_llm
 
 - rule: Mostrar horario medico especifico
   steps:
