@@ -136,7 +136,7 @@ const Contato = () => {
                         <li><i className="fas fa-map-marker-alt"></i> Endereço: Rua da Saúde, 123 - Centro, Cidade, Brasil</li>
                         <li><i className="fas fa-phone"></i> Telefone: (61) 9986-54583</li>
                         <li><i className="fas fa-envelope"></i> Email: contato@consultoriosaude.com.br</li>
-                        <li><i className='fas fa-clock'></i> Horario de Funcionamento: Segunda a Sexta, das 8h as 20h</li>
+                        <li><i className='fas fa-clock'></i> Segunda a Sexta, das 8h às 18h, e aos sábados, das 8h às 12h.</li>
                     </ul>
                 </section>
 

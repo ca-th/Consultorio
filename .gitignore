@@ -1,32 +1,39 @@
-# Ignorar arquivos temporários e de configuração do Qodo
-/.qodo
-
-# Ignorar Python virtual environments
-# Se sua venv estiver na raiz de Projeto-IA-final, mantenha:
+# ---------- Python virtual environments ----------
 venv/
 .venv/
+rasa_venv/
+**/venv*/
+**/.venv*/
 
+# ---------- Dotenv files (chaves/senhas) ----------
+.env
+.env.*
+*.env
+rasa/.env
 
-# Ignorar Node.js dependencies (se aplicável ao Projeto-IA-final)
-node_modules/
-build/
-.env.local
-.env*.local
+# ---------- Rasa build artifacts ----------
+# Modelos treinados (gerais). Comente se quiser versionar modelos.
+rasa/models/
+# Logs
+rasa/*.log
+# Diretórios internos de runtime/cache
+**/.rasa/
+**/.rasa_cache/
 
-# Ignorar arquivos Python
+# ---------- Python caches / tooling ----------
 __pycache__/
-*.pyc
+**/__pycache__/
+*.py[cod]
+*.pyo
 .pytest_cache/
 .ipynb_checkpoints/
 
-# Ignorar arquivos de IDEs (opcional)
-.idea/
-# .vscode/
-#           
-*.swp
+# ---------- Node / frontend builds ----------
+node_modules/
+build/
+dist/
 
-# Pastas e arquivos específicos do Rasa que NÃO devem ser versionados
-rasa/.rasa/cache/ 
-rasa/models/   
-rasa_venv/ 
-rasa/*.log       
+# ---------- IDE/editor ----------
+.idea/
+.vscode/
+*.swp

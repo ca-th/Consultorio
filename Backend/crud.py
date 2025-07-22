@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from Backend import models, schemas # IMPORTAÇÃO ABSOLUTA
+from Backend import models, schemas
 
 def get_usuarios(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Usuario).offset(skip).limit(limit).all()

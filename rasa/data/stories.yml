@@ -1,0 +1,23 @@
+version: "3.1"
+stories:
+  - story: fluxo completo de agendamento
+    steps:
+      - intent: greet
+      - action: utter_greet
+      - intent: agendar_consulta
+      - action: agendamento_consulta_form
+      - active_loop: agendamento_consulta_form
+      - intent: inform_especialidade
+      - action: agendamento_consulta_form
+      - intent: inform_data_hora
+      - action: agendamento_consulta_form
+      - intent: inform_nome_medico
+      - action: agendamento_consulta_form
+      - intent: inform_motivo
+      - action: agendamento_consulta_form
+      - active_loop: null
+      - action: utter_submit_agendamento_consulta_form
+      - intent: affirm
+      - action: action_submit_agendamento
+      - intent: goodbye
+      - action: utter_goodbye

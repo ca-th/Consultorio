@@ -1,0 +1,242 @@
+# data/nlu.yml
+
+version: "3.1"
+
+nlu:
+  # --- INTENÇÃO EXISTENTE (fornecer_cpf) ---
+  # Mantenha esta intenção se ela for relevante para o seu bot.
+  - intent: fornecer_cpf
+    examples: |
+      - meu CPF é [123.456.789-00](cadastro_pessoa_f)
+      - meu cadastro é [98765432100](cadastro_pessoa_f)
+      - o CPF é [000.111.222-33](cadastro_pessoa_f)
+      - meu número de documento é [44455566677](cadastro_pessoa_f)
+      - meu cpf [111.222.333-44](cadastro_pessoa_f)
+      - [55566677788](cadastro_pessoa_f)
+      - é [99999999999](cadastro_pessoa_f)
+
+  # --- INTENÇÕES GERAIS ---
+  - intent: greet
+    examples: |
+      - oi
+      - olá
+      - bom dia
+      - boa tarde
+      - boa noite
+      - e aí
+      - oi tudo bem
+      - como vai
+
+  - intent: goodbye
+    examples: |
+      - tchau
+      - até mais
+      - adeus
+      - vou indo
+      - até logo
+      - estou saindo
+
+  - intent: affirm
+    examples: |
+      - sim
+      - claro
+      - com certeza
+      - isso
+      - uhum
+      - de acordo
+      - pode ser
+
+  - intent: deny
+    examples: |
+      - não
+      - nem
+      - negativo
+      - de jeito nenhum
+      - de forma alguma
+      - nops
+
+
+  # --- INTENÇÕES PARA O FORMULÁRIO DE AGENDAMENTO ---
+  - intent: agendar_consulta
+    examples: |
+      - quero marcar uma consulta
+      - agendar um horário
+      - preciso de uma consulta
+      - marcar consulta
+      - posso agendar?
+      - gostaria de agendar uma consulta médica
+      - marcar consulta com um médico
+      - preciso de um agendamento
+
+  - intent: inform_especialidade
+    examples: |
+      - [cardiologia](especialidade)
+      - preciso de um [dermatologista](especialidade)
+      - um especialista em [gastroenterologia](especialidade)
+      - quero um [pediatra](especialidade)
+      - na área de [ortopedia](especialidade)
+      - pode ser [clínico generalista](especialidade)
+      - para [odontologia](especialidade)
+      - [consulta geral](especialidade)
+      - [ginecologia](especialidade)
+      - [urologia](especialidade)
+
+  - intent: inform_data_hora
+    examples: |
+      - para [amanhã](data_consulta)
+      - na [próxima terça](data_consulta)
+      - dia [25 de julho](data_consulta)
+      - [quarta-feira](data_consulta) às [15h](hora_consulta)
+      - [hoje](data_consulta) [às 18 horas](hora_consulta)
+      - em [3 dias](data_consulta)
+      - às [9 da manhã](hora_consulta)
+      - [14h30](hora_consulta)
+      - no dia [primeiro de agosto](data_consulta)
+      - qual é o dia de hoje? # Adicionado este exemplo para melhorar a detecção
+
+  - intent: inform_nome_medico
+    examples: |
+      - com [Dr. Silva](nome_medico)
+      - pode ser [Dra. Ana](nome_medico)
+      - um médico chamado [Carlos](nome_medico)
+      - não tenho preferência de [médico](nome_medico)
+      - qualquer [médico](nome_medico)
+      - pode ser o [Dr. João](nome_medico)
+      - [Dr. João Silva](nome_medico)
+      - [Dra. Maria Oliveira](nome_medico)
+      - [Dr. Carlos Mendes](nome_medico)
+      - [Dra. Ana Souza](nome_medico)
+
+  - intent: inform_motivo
+    examples: |
+      - o motivo é [dor de cabeça frequente](motivo_consulta)
+      - para [exames de rotina](motivo_consulta)
+      - por causa de [uma tosse que não passa](motivo_consulta)
+      - [sinto tonturas e cansaço](motivo_consulta)
+      - [para check-up anual](motivo_consulta)
+
+  - intent: stop
+    examples: |
+      - parar
+      - cancelar
+      - interromper
+      - não quero mais
+      - esquece
+      - para o agendamento
+      - quero cancelar o agendamento
+
+  # --- INTENÇÕES PARA INFORMAÇÕES DA CLÍNICA ---
+  - intent: ask_horario_geral
+    examples: |
+      - qual o horário de funcionamento?
+      - quais são os horários de vocês?
+      - qual o horário da clínica?
+      - que horas abrem?
+      - que horas fecham?
+      - horários de atendimento
+
+  - intent: ask_servicos
+    examples: |
+      - quais serviços vocês oferecem?
+      - que especialidades têm?
+      - tipos de consulta
+      - quais os serviços disponíveis?
+      - qual tipo de médico vocês têm?
+      - quais são as especialidades
+      - tem consulta geral
+      - tem pediatria
+      - tem cardiologia
+      - tem dermatologia
+
+  - intent: ask_horario_medico_especifico
+    examples: |
+      - qual o horário dos médicos?
+      - qual o horário do [Dr. João Silva](nome_medico)?
+      - que horas [Dra. Maria Oliveira](nome_medico) atende?
+      - quero saber o horário do [Dr. Carlos Mendes](nome_medico)
+      - a [Dra. Ana Souza](nome_medico) atende quando?
+      - horários de atendimento dos doutores
+      - agenda dos médicos
+      - qual o horário de [consulta geral](especialidade)?
+      - horário de [pediatria](especialidade)
+
+  - intent: ask_contato
+    examples: |
+      - qual o contato de vocês?
+      - como entro em contato?
+      - quero o telefone
+      - qual o email
+      - onde fica a clínica?
+      - como faço para falar com vocês?
+      - formas de contato
+
+  - intent: ask_endereco
+    examples: |
+      - qual o endereço?
+      - onde é a clínica?
+      - qual o local?
+      - onde vocês estão?
+
+  - intent: ask_telefone
+    examples: |
+      - qual o telefone?
+      - me passa o número
+      - qual o número de contato?
+
+  - intent: ask_email
+    examples: |
+      - qual o email?
+      - me passa o email de vocês?
+      - qual o email para contato?
+
+  # --- NOVA INTENÇÃO PARA PERGUNTAS AO LLM EXTERNO ---
+  - intent: perguntar_ao_llm
+    examples: |
+      - o que é inteligência artificial?
+      - me conte sobre a história do Brasil
+      - escreva uma poesia sobre gatos
+      - qual a capital da França?
+      - me explique a teoria da relatividade
+      - quem é Albert Einstein?
+      - como funciona a internet?
+      - me diga algo sobre ciência
+      - pesquise qualquer coisa
+      - quero saber sobre física
+      - o que você sabe sobre programação?
+      - pode me falar sobre mudanças climáticas?
+      - informação sobre buracos negros
+      - explique blockchain
+      - curiosidade sobre o espaço
+      - me fale algo interessante
+      - me explique esse conceito
+      - informações gerais
+      - o que você sabe sobre o universo?
+      - me dê um resumo sobre a segunda guerra mundial
+      - qual o significado da vida?
+      - me fale sobre culinária japonesa
+      - como fazer um bolo?
+      - me conte uma piada
+      - qual a diferença entre sol e lua?
+      - me explique a gravidade
+      - como funciona um carro?
+      - qual a cor do céu?
+      - o que é um átomo?
+      - qual a idade da terra?
+      - me fale sobre as pirâmides do Egito
+      - o que é o sistema solar?
+      - me diga fatos sobre a água
+      - para que serve uma árvore?
+      - me explique sobre o clima
+      - como funciona um computador?
+      - quem descobriu o Brasil?
+      - me fale sobre a biologia
+      - o que é filosofia?
+      - qual o oceano mais profundo?
+      - me diga algo sobre o espaço sideral
+      - qual a montanha mais alta do mundo?
+      - o que são os direitos humanos?
+      - me explique sobre a economia
+      - como se forma um arco-íris?
+      - me fale sobre os dinossauros
+      - o que é fotossíntese?
+      - quem foi Leonardo da Vinci?

@@ -85,7 +85,7 @@ git clone [url-do-repositorio]
 cd projeto-IA-final
 pip install uvicorn
 criar a maquina: python -m venv venv
-ativar o ven: source venv/Scripts/active(no git bash), venv\Scripts\activate.bat(cmd)
+ativar o ven: source venv/Scripts/active(no git bash), venv\Scripts\activate.bat(cmd) 
 instalar os pacotes: pip install -r requirements.txt
 ao ativar o ven, usar o comando de instalação novamente: pip install uvicorn
 executar: uvicorn main:app --reload ou uvicorn Backend.main:app --reload (recomendado)
@@ -111,7 +111,7 @@ cd rasa
 python -m venv venv
 
 # Ative o ambiente virtual
-.\venv\Scripts\activate
+.\venv\Scripts\activate ou source venv_py310/Scripts/activate
 
 # Instale o package manager do uv
 # macOS e Linux
