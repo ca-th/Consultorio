@@ -91,7 +91,7 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit">Entrar</button>
+          <button type="login">Entrar</button>
 
           <p className="register-link">
             Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
