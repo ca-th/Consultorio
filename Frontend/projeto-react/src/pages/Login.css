@@ -1,0 +1,80 @@
+.login-page {
+  min-height: 100vh;
+  background: var(--bg-color);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-container {
+  background: var(--box-color);
+  color: var(--text-color);
+  padding: 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  margin-bottom: 1.2rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  width: 100%;
+  background: #007bff;
+  color: white;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.theme-change {
+  position: fixed;              
+  top: 20px;                    
+  right: 20px;          
+  z-index: 1000;                
+
+  cursor: pointer;
+  color: var(--mainTxtColor);
+  font-size: 20px;
+  padding: 10px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.3s, color 0.3s;
+}
+
+.theme-change:hover {
+  color: var(--accentColor);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.register-link {
+  margin-top: 1rem;
+  text-align: center;
+}
