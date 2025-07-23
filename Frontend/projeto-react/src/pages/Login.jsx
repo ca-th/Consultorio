@@ -93,9 +93,6 @@ const Login = () => {
 
           <button type="login">Entrar</button>
 
-          <p className="register-link">
-            Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
-          </p>
         </form>
       </div>
     </div>

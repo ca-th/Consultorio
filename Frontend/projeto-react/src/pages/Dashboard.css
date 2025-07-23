@@ -131,21 +131,8 @@ body.dark-theme {
 
 
 
-/* Ícone de troca de tema - no topo direito da área content */
-.theme-change {
-  position: absolute;
-  top: 20px;
-  right: 30px;
-  font-size: 1.8rem;
-  color: var(--theme-icon-color);
-  cursor: pointer;
-  transition: color 0.3s ease;
-  user-select: none;
-}
 
-.theme-change:hover {
-  color: var(--theme-icon-hover);
-}
+
 
 /* Responsividade simples */
 @media (max-width: 768px) {
