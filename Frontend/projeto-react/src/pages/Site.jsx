@@ -59,7 +59,7 @@ export default function Site() {
             <br /><span>Deseja agendar uma consulta? Clique no botão abaixo.</span>
           </p>
           <div className="hero-btn">
-            <Link to="/agendamento">
+            <Link to="/login">
               <button className="resume-btn">Agende sua Consulta</button>
             </Link>
           </div>
