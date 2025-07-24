@@ -7,6 +7,7 @@ import Contato from './pages/Contato';
 import Agendamento from './pages/Agendamento';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Consultas from './pages/Consultas';
 function App() {
   return (
     <Router>
@@ -20,6 +21,7 @@ function App() {
         <Route path="/agendamento" element={<Agendamento />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="consultas" element={<Consultas />} />
       </Routes>
     </Router>
   );
