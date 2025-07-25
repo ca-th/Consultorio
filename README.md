@@ -82,7 +82,7 @@ Sistema robusto de gerenciamento com endpoints para:
 git clone [url-do-repositorio]
 
 # Backend (Python)
-cd projeto-IA-final
+cd Consultorio
 pip install uvicorn
 criar a maquina: python -m venv venv
 ativar o ven: source venv/Scripts/active(no git bash), venv\Scripts\activate.bat(cmd) 
@@ -92,7 +92,7 @@ executar: uvicorn main:app --reload ou uvicorn Backend.main:app --reload (recome
 Se der erro, saia da pasta Backend e rode algum dos comandos de executar novamente
 
 # Frontend (React)
-cd projeto-IA-final (duas vezes)
+cd Consultorio
 cd frontend
 cd projeto-react
 npm install (se for necessário)

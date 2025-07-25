@@ -90,7 +90,7 @@ const Agendamento = () => {
     <div className="scheduling-page">
       <div className="top-bar">
         <Link
-          to="/"
+          to="/dashboard"
           className="back-link"
           id="backLink"
           style={{ display: isChatbotVisible ? 'none' : 'flex' }}
