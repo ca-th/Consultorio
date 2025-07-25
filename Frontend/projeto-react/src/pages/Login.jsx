@@ -41,10 +41,27 @@ const Login = () => {
     };
   }, []);
 
+  // Função para aplicar máscara de CPF
+  const formatCpf = (value) => {
+    const cleaned = value.replace(/\D/g, '').slice(0, 11); // Remove tudo que não é número
+    const formatted = cleaned
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    return formatted;
+  };
+
+  const handleCpfChange = (e) => {
+    const value = e.target.value;
+    const formatted = formatCpf(value);
+    setCpf(formatted);
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
-    // Simulação de login
-    if (cpf === '12345678900' && senha === '1234') {
+
+    const cpfSemFormatacao = cpf.replace(/\D/g, '');
+    if (cpfSemFormatacao === '12345678900' && senha === '1234') {
       alert('Login efetuado!');
       navigate('/dashboard');
     } else {
@@ -54,17 +71,18 @@ const Login = () => {
 
   return (
     <div className="login-page">
-
       <div className="login-container">
         <form onSubmit={handleLogin}>
           <div className="theme-change">
             <i className="fa-solid fa-moon" id="themeChangeIcon"></i>
           </div>
+
           <div className="back-button">
             <Link to="/">
               <i className="fa-solid fa-arrow-left"></i>
             </Link>
-            </div>
+          </div>
+
           <h2>Login</h2>
 
           <div className="input-group">
@@ -72,9 +90,10 @@ const Login = () => {
             <input
               type="text"
               id="cpf"
-              placeholder="Digite seu CPF"
+              placeholder="000.000.000-00"
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
+              onChange={handleCpfChange}
+              maxLength="14"
               required
             />
           </div>
@@ -91,8 +110,7 @@ const Login = () => {
             />
           </div>
 
-          <button type="login">Entrar</button>
-
+          <button type="submit">Entrar</button>
         </form>
       </div>
     </div>
