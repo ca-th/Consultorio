@@ -14,6 +14,7 @@ rasa/.env
 # ---------- Rasa build artifacts ----------
 # Modelos treinados (gerais). Comente se quiser versionar modelos.
 rasa/models/
+models/*.tar.gz
 # Logs
 rasa/*.log
 # Diretórios internos de runtime/cache
