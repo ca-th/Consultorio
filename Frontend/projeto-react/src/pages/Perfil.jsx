@@ -8,7 +8,6 @@ const Modal = ({ titulo, mensagem, onConfirm, onCancel }) => (
     role="dialog"
     aria-modal="true"
     aria-labelledby="modal-title"
-    
     tabIndex={-1}
   >
     <div className="modal-content">
@@ -29,15 +28,20 @@ const Modal = ({ titulo, mensagem, onConfirm, onCancel }) => (
 const Perfil = () => {
   const navigate = useNavigate();
 
-  // Dados iniciais do usuário
-  const [user, setUser] = useState({
+  const defaultUser = {
     nome: 'João da Silva',
     email: 'joao.silva@email.com',
     telefone: '(11) 9 1234-5678',
     dataNascimento: '1990-05-12',
     genero: 'Masculino',
     cpf: '123.456.789-00',
-    fotoPerfil: localStorage.getItem('fotoPerfil') || '',
+    fotoPerfil: '',
+  };
+
+  // Carrega dados do localStorage ou usa dados padrão
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('userData');
+    return stored ? JSON.parse(stored) : defaultUser;
   });
 
   // Tema dark/light
@@ -54,7 +58,10 @@ const Perfil = () => {
 
   // Controle logout
   const handleLogout = () => {
-    navigate('/login');
+    // Se desejar limpar dados no logout, descomente abaixo:
+    // localStorage.removeItem('userData');
+    // localStorage.removeItem('theme');
+    navigate('/');
   };
 
   // Estados de edição e formulário
@@ -139,7 +146,7 @@ const Perfil = () => {
     setUser(formData);
     setEditando(false);
     setModalSalvarAberto(false);
-    if (formData.fotoPerfil) localStorage.setItem('fotoPerfil', formData.fotoPerfil);
+    localStorage.setItem('userData', JSON.stringify(formData));
   };
   const confirmarCancelar = () => {
     setFormData(user);

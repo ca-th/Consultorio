@@ -13,7 +13,9 @@
     margin: 80px 0 0px 69px;
 }
 
-
+.p{
+  color: var(--card-bg);
+}
 .content {
         flex: 1 1;
     padding: 30px;
