@@ -1,4 +1,8 @@
-version: "3.1"
+version: "3.6"
+
+recipe: default.v1
+language: pt
+assistant_id: 20230405-114328-tranquil-mustard
 
 intents:
   - greet
@@ -24,6 +28,8 @@ intents:
   - ask_endereco
   - ask_telefone
   - ask_email
+  - fornecer_cpf        # remova se não usar agora
+  - perguntar_ao_llm
 
 entities:
   - especialidade
@@ -31,6 +37,7 @@ entities:
   - hora_consulta
   - nome_medico
   - motivo_consulta
+  - cadastro_pessoa_f    # remova se tirar fornecer_cpf
 
 slots:
   especialidade:
@@ -57,7 +64,23 @@ slots:
     mappings:
       - type: from_entity
         entity: nome_medico
+        conditions:
+          - active_loop: agendamento_consulta_form
+      - type: from_text
+        conditions:
+          - active_loop: agendamento_consulta_form
+          - requested_slot: nome_medico
+
   motivo_consulta:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: agendamento_consulta_form
+          - requested_slot: motivo_consulta
+
+  cadastro_pessoa_f:
     type: text
     influence_conversation: true
     mappings:
@@ -67,11 +90,15 @@ slots:
 forms:
   agendamento_consulta_form:
     required_slots:
+      - motivo_consulta_tipo
       - especialidade
       - data_consulta
       - hora_consulta
       - nome_medico
       - motivo_consulta
+    # Esta linha é a mais importante. Ela diz ao Rasa para chamar a ação customizada
+    # para perguntar por cada slot, em vez de usar as respostas pre-definidas.
+    ask_slot_action: action_perguntar_slot_llm
 
 actions:
   - action_perguntar_llm
@@ -85,35 +112,21 @@ responses:
   utter_goodbye:
     - text: "Até logo!"
 
+  # Perguntas do formulário
   utter_ask_especialidade:
-    - text: "Qual especialidade você está procurando?"
-
+    - text: "Para qual especialidade você gostaria de agendar a consulta?"
   utter_ask_data_consulta:
-    - text: "Para qual data você gostaria de agendar a consulta?"
-    - text: "Por favor, me diga a data desejada."
-
+    - text: "Para qual dia você gostaria de agendar? Ex.: 'amanhã', 'quarta-feira', '25 de julho'."
   utter_ask_hora_consulta:
-    - text: "Qual horário seria melhor para você?"
-    - text: "Em que horário você gostaria de agendar?"
-
+    - text: "E qual horário seria ideal? Ex.: '10h', 'às 14h'."
   utter_ask_nome_medico:
-    - text: "Você tem alguma preferência de médico?"
-    - text: "Qual o nome do médico, se houver?"
-
+    - text: "Você tem preferência de médico? Se sim, informe o nome."
   utter_ask_motivo_consulta:
-    - text: "Qual o motivo da sua consulta?"
-    - text: "Poderia descrever brevemente o motivo da consulta?"
+    - text: "Qual o motivo da consulta?"
 
-  utter_ask_llm:
-    - text: "Estou pensando na sua pergunta..."
-    - text: "Por favor, aguarde enquanto busco a resposta..."
-
-  utter_cheer_up:
-    - text: "Anime-se! Posso ajudar com algo mais?"
-
-  # --- Respostas ADICIONADAS para corresponder às Regras ---
-  utter_iamabot:
-    - text: "Eu sou um assistente virtual."
+  # Resumo antes da confirmação
+  utter_submit_agendamento_consulta_form:
+    - text: "Confirmando: {especialidade} em {data_consulta} às {hora_consulta} com {nome_medico} (motivo: {motivo_consulta}). Posso confirmar?"
 
   utter_forms_deactivated:
     - text: "Ok, cancelado."
@@ -137,7 +150,19 @@ responses:
     - text: "Nosso telefone para contato é (XX) XXXX-XXXX."
 
   utter_email:
-    - text: "Nosso e-mail para contato é contato@clinica.com."
+    - text: "contato@consultoriosaude.com.br."
+
+  # LLM
+  utter_ask_llm:
+    - text: "Processando..."
+  utter_debug_llm_call:
+    - text: "DEBUG: Chamando LLM..."
+
+actions:
+  - action_perguntar_llm
+  - validate_agendamento_consulta_form
+  - action_submit_agendamento
+  # (Opcional) action_store_cpf se quiser tratar fornecer_cpf
 
 session_config:
   session_expiration_time: 60

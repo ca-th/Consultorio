@@ -8,6 +8,7 @@ import Agendamento from './pages/Agendamento';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Consultas from './pages/Consultas';
+import Perfil from './pages/Perfil';
 function App() {
   return (
     <Router>
@@ -22,6 +23,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="consultas" element={<Consultas />} />
+        <Route path="/perfil" element={<Perfil />} />
       </Routes>
     </Router>
   );

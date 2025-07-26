@@ -17,7 +17,8 @@ import dateparser
 load_dotenv()
 
 # ====================================================================
-# AÇÃO PERSONALIZADA PARA INTERAGIR COM O LLM (GEMINI)
+# AÇÃO DE PERGUNTA GENÉRICA USANDO LLM
+# Esta ação responde a perguntas que não fazem parte do formulário.
 # ====================================================================
 class ActionPerguntarLLM(Action):
 
@@ -59,20 +60,63 @@ class ActionPerguntarLLM(Action):
             
             prompt_para_llm = f"{system_prompt}\n\nUsuário: {user_message}"
 
-            dispatcher.utter_message(response="utter_ask_llm")
+            # Usa await para a chamada assíncrona ao LLM
             response = await model.generate_content_async(prompt_para_llm)
             llm_response = response.text
 
-            # Lógica de filtro para evitar alucinações e respostas irrelevantes
-            if any(palavra in llm_response.lower() for palavra in ["agendar", "marcar", "agendamento"]):
-                 dispatcher.utter_message(text=llm_response + "\n\nPara agendar sua consulta, por favor, me diga a especialidade desejada.")
-                 return [ActiveLoop(name="agendamento_consulta_form")]
-            else:
-                 dispatcher.utter_message(text=llm_response)
+            # Envia a resposta diretamente ao usuário
+            dispatcher.utter_message(text=llm_response)
 
         except Exception as e:
             dispatcher.utter_message(text=f"Desculpe, tive um problema ao tentar responder a sua pergunta. Erro: {e}")
             
+        return []
+
+# ====================================================================
+# AÇÃO DE PERGUNTAR SLOTS USANDO LLM
+# Esta é a ação que vamos usar para gerar as perguntas do formulário.
+# ====================================================================
+class ActionPerguntarSlotLLM(Action):
+    def name(self) -> Text:
+        return "action_perguntar_slot_llm"
+
+    async def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]
+    ) -> List[Dict[Text, Any]]:
+
+        latest_question_slot = tracker.get_latest_question_slot_name()
+
+        # Mapeia os slots para prompts amigáveis para o LLM
+        prompt_map = {
+            "motivo_consulta_tipo": "Gere uma pergunta para saber se a consulta é de rotina ou por algum sintoma.",
+            "especialidade": "Gere uma pergunta para pedir a especialidade médica para o agendamento.",
+            "data_consulta": "Gere uma pergunta para pedir a data da consulta médica.",
+            "hora_consulta": "Gere uma pergunta para pedir a hora da consulta.",
+            "nome_medico": "Gere uma pergunta para pedir o nome do médico para o agendamento.",
+            "motivo_consulta": "Gere uma pergunta para que o usuário descreva o motivo da consulta.",
+        }
+
+        prompt_para_llm = prompt_map.get(
+            latest_question_slot,
+            f"Gere uma pergunta para pedir ao usuário a informação de '{latest_question_slot}'."
+        )
+
+        try:
+            GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+            if not GEMINI_API_KEY:
+                dispatcher.utter_message(text=f"Qual {latest_question_slot}?")
+                return []
+            
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = await model.generate_content_async(prompt_para_llm)
+            llm_response = response.text
+            dispatcher.utter_message(text=llm_response)
+
+        except Exception as e:
+            dispatcher.utter_message(text=f"Qual {latest_question_slot}?")
+            return []
+
         return []
 
 # ====================================================================
@@ -81,6 +125,22 @@ class ActionPerguntarLLM(Action):
 class ValidateAgendamentoConsultaForm(FormValidationAction):
     def name(self) -> Text:
         return "validate_agendamento_consulta_form"
+
+    def validate_motivo_consulta_tipo(
+        self,
+        slot_value: Any,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> Dict[Text, Any]:
+        """Validate `motivo_consulta_tipo` value."""
+        if any(keyword in slot_value.lower() for keyword in ["rotina", "rotineira", "exames"]):
+            return {"motivo_consulta_tipo": "rotina"}
+        elif any(keyword in slot_value.lower() for keyword in ["sintoma", "dor", "doente"]):
+            return {"motivo_consulta_tipo": "sintoma"}
+        else:
+            dispatcher.utter_message(text="Desculpe, não entendi. É uma consulta de rotina ou por causa de algum sintoma?")
+            return {"motivo_consulta_tipo": None}
 
     def validate_especialidade(
         self,
@@ -148,10 +208,11 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `nome_medico` value."""
-        if len(slot_value) >= 3 and slot_value.isalpha():
+        # Aumentei o mínimo para 2, pois nomes de médicos podem ser curtos.
+        if len(slot_value) >= 2 and all(c.isalpha() or c.isspace() for c in slot_value):
             return {"nome_medico": slot_value}
         else:
-            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido (somente letras, no mínimo 3 caracteres).")
+            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido (somente letras, no mínimo 2 caracteres).")
             return {"nome_medico": None}
 
     def validate_motivo_consulta(
