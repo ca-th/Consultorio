@@ -4,6 +4,9 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet, ActiveLoop, FollowupAction, AllSlotsReset
 from rasa_sdk.forms import FormValidationAction
 
+import pymysql
+from pymysql import Error
+
 # Importar bibliotecas para Gemini e variáveis de ambiente
 import google.generativeai as genai
 import os
@@ -149,14 +152,33 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         tracker: Tracker,
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
-        """Validate `especialidade` value."""
-        especialidades_disponiveis = ["pediatria", "cardiologia", "dermatologia", "clinico geral", "gastroenterologia", "ortopedia", "odontologia", "ginecologia", "urologia"]
-        
-        if slot_value.lower() in especialidades_disponiveis:
-            return {"especialidade": slot_value}
-        else:
-            dispatcher.utter_message(text=f"Não temos a especialidade de {slot_value}. Por favor, escolha entre: Pediatria, Cardiologia, Dermatologia, Clínico Geral, Gastroenterologia, Ortopedia, Odontologia, Ginecologia ou Urologia.")
-            return {"especialidade": None}
+        try:
+            conn = pymysql.connect(
+                host=os.getenv("HOST"),
+                user=os.getenv("USER"),
+                password=os.getenv("PASSWORD"),
+                database=os.getenv("DATABASE")
+            )
+            
+            especialidade = tracker.get_slot("especialidade").lower()
+            if especialidade:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM consultas WHERE especialidade = %s", (especialidade))
+                resultado = cursor.fetchall()
+
+                if resultado:
+                    especialidade_valida = True
+                else:
+                    especialidade_valida = False
+                    dispatcher.utter_message(text=f"Não temos a especialidade de {especialidade}. Por favor, escolha entre: Pediatria, Cardiologia, Dermatologia, Clínico Geral, Gastroenterologia, Ortopedia, Odontologia, Ginecologia ou Urologia.")
+
+                cursor.close()
+                conn.close()
+                return [SlotSet("especialidade_valida", especialidade_valida)]
+
+        except Error as e:
+            dispatcher.utter_message(text=f"Erro ao conectar ao banco de dados: {e}")
+            return {"data_consulta": None}
 
     def validate_data_consulta(
         self,
@@ -208,11 +230,33 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `nome_medico` value."""
-        # Aumentei o mínimo para 2, pois nomes de médicos podem ser curtos.
-        if len(slot_value) >= 2 and all(c.isalpha() or c.isspace() for c in slot_value):
+        
+        if len(slot_value) >= 3 and slot_value.isalpha():
+            try:
+                conn = pymysql.connect(
+                    host=os.getenv("HOST"),
+                    user=os.getenv("USER"),
+                    password=os.getenv("PASSWORD"),
+                    database=os.getenv("DATABASE")
+                )
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM medicos WHERE nome = %s", (slot_value,))
+                resultado = cursor.fetchone()
+
+                if resultado:
+                    slot_value = slot_value.title()  # Formata o nome do médico
+                else:
+                    dispatcher.utter_message(text=f"Não encontramos um médico com o nome {slot_value}. Por favor, verifique a ortografia ou forneça outro nome.")
+                    return {"nome_medico": None}
+
+                cursor.close()
+                conn.close()
+            except Error as e:
+                dispatcher.utter_message(text=f"Erro ao conectar ao banco de dados: {e}")
+                return {"nome_medico": None}
             return {"nome_medico": slot_value}
         else:
-            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido (somente letras, no mínimo 2 caracteres).")
+            dispatcher.utter_message(text="Por favor, me diga um nome de médico válido (somente letras, no mínimo 3 caracteres).")
             return {"nome_medico": None}
 
     def validate_motivo_consulta(
@@ -223,11 +267,54 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: Dict[Text, Any],
     ) -> Dict[Text, Any]:
         """Validate `motivo_consulta` value."""
-        if len(slot_value) > 5:
+        if len(slot_value) > 5 and len(slot_value) < 255:
             return {"motivo_consulta": slot_value}
         else:
             dispatcher.utter_message(text="Por favor, descreva um pouco mais o motivo da sua consulta (mínimo de 6 caracteres).")
             return {"motivo_consulta": None}
+        
+    def validate_agendamento(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
+        try:
+            conn = pymysql.connect(
+                host=os.getenv("HOST"),
+                user=os.getenv("USER"),
+                password=os.getenv("PASSWORD"),
+                database=os.getenv("DATABASE")
+            )
+
+            cursor = conn.cursor()
+            data_consulta = tracker.get_slot("data_consulta")
+            hora_consulta = tracker.get_slot("hora_consulta")
+            nome_medico = tracker.get_slot("nome_medico")
+            usuario_id = tracker.get_slot("user_id")
+
+            cursor.execute("SELECT id_medico FROM medicos WHERE nome = %s", (nome_medico,))
+            id_medico = cursor.fetchone()
+            cursor.execute("SELECT id_horario FROM horarios WHERE hora = %s", (hora_consulta,))
+            id_horario = cursor.fetchone()
+            cursor.execute("SELECT id_agendamento FROM agendamentos WHERE id_medico = %s AND id_horario = %s", (id_medico, id_horario))
+            agendamento_existente = cursor.fetchone()
+            if agendamento_existente:
+                dispatcher.utter_message(text="Já existe um agendamento para esse médico nesse horário. Por favor, escolha outro horário ou médico.")
+                return {"agendamento": None}
+            else:
+                # Inserir agendamento no banco de dados
+                cursor.execute(
+                    "INSERT INTO agendamentos (data_consulta, hora_consulta, nome_medico, motivo_consulta) VALUES (%s, %s, %s, %s)",
+                    (data_consulta, hora_consulta, nome_medico, tracker.get_slot("motivo_consulta"))
+                )
+                conn.commit()
+                dispatcher.utter_message(text="Agendamento realizado com sucesso!")        
+        except Error as e:
+            dispatcher.utter_message(text=f"Erro ao conectar ao banco de dados: {e}")
+            return []
+
+        return []
 
 class ActionSubmitAgendamento(Action):
     def name(self) -> Text:
@@ -242,8 +329,31 @@ class ActionSubmitAgendamento(Action):
         nome_medico = tracker.get_slot("nome_medico")
         motivo_consulta = tracker.get_slot("motivo_consulta")
 
+        try:
+            conn = pymysql.connect(
+                host=os.getenv("HOST"),
+                user=os.getenv("USER"),
+                password=os.getenv("PASSWORD"),
+                database=os.getenv("DATABASE")
+            )
+            cursor = conn.cursor()
+            
+            # Inserir agendamento no banco de dados
+            cursor.execute(
+                "INSERT INTO agendamentos (especialidade, data_consulta, hora_consulta, nome_medico, motivo_consulta) VALUES (%s, %s, %s, %s, %s)",
+                (especialidade, data_consulta, hora_consulta, nome_medico, motivo_consulta)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+        
+        except Error as e:
+            dispatcher.utter_message(text=f"Erro ao conectar ao banco de dados: {e}")
+            return []
+
         print(f"Agendamento confirmado: Especialidade: {especialidade}, Data: {data_consulta}, Hora: {hora_consulta}, Médico: {nome_medico}, Motivo: {motivo_consulta}")
 
         dispatcher.utter_message(text="Ok, seu agendamento está quase pronto! Entraremos em contato em breve para confirmar os detalhes. Agradecemos a sua preferência.")
         
         return [AllSlotsReset()]
+    
