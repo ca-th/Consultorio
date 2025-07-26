@@ -1,35 +1,19 @@
-version: "3.6"
-
-recipe: default.v1
-language: pt
-assistant_id: 20230405-114328-tranquil-mustard
+version: "3.1"
 
 intents:
   - greet
   - goodbye
   - affirm
   - deny
-  - thank_you
-  # --- Intenções do Formulário (mantidas para Histórias) ---
+  - agendar_consulta
   - inform_specialty
   - inform_date
   - inform_time
   - inform_doctor
+  - inform_name
   - inform_reason
-  # --- Intenções ADICIONADAS para corresponder às Regras ---
-  - bot_challenge
-  - perguntar_ao_llm # Nome unificado (antes era ask_llm)
-  - agendar_consulta
-  - stop
-  - ask_horario_geral
-  - ask_servicos
-  - ask_horario_medico_especifico
-  - ask_contato
-  - ask_endereco
-  - ask_telefone
-  - ask_email
-  - fornecer_cpf        # remova se não usar agora
-  - perguntar_ao_llm
+  - afirma_rotina
+  - nega_rotina
 
 entities:
   - especialidade
@@ -37,132 +21,110 @@ entities:
   - hora_consulta
   - nome_medico
   - motivo_consulta
-  - cadastro_pessoa_f    # remova se tirar fornecer_cpf
+  - nome
+  - cadastro_pessoa_f
 
 slots:
   especialidade:
     type: text
-    influence_conversation: true
     mappings:
       - type: from_entity
         entity: especialidade
+
   data_consulta:
     type: text
-    influence_conversation: true
     mappings:
       - type: from_entity
         entity: data_consulta
+
   hora_consulta:
     type: text
-    influence_conversation: true
     mappings:
       - type: from_entity
         entity: hora_consulta
+
   nome_medico:
     type: text
-    influence_conversation: true
     mappings:
       - type: from_entity
         entity: nome_medico
-        conditions:
-          - active_loop: agendamento_consulta_form
-      - type: from_text
-        conditions:
-          - active_loop: agendamento_consulta_form
-          - requested_slot: nome_medico
 
   motivo_consulta:
     type: text
-    influence_conversation: true
-    mappings:
-      - type: from_text
-        conditions:
-          - active_loop: agendamento_consulta_form
-          - requested_slot: motivo_consulta
-
-  cadastro_pessoa_f:
-    type: text
-    influence_conversation: true
     mappings:
       - type: from_entity
         entity: motivo_consulta
 
+  nome:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: nome
+
+  cadastro_pessoa_f:
+    type: text
+    mappings:
+      - type: from_entity
+        entity: cadastro_pessoa_f
+
 forms:
   agendamento_consulta_form:
     required_slots:
-      - motivo_consulta_tipo
       - especialidade
       - data_consulta
       - hora_consulta
       - nome_medico
       - motivo_consulta
-    # Esta linha é a mais importante. Ela diz ao Rasa para chamar a ação customizada
-    # para perguntar por cada slot, em vez de usar as respostas pre-definidas.
-    ask_slot_action: action_perguntar_slot_llm
-
-actions:
-  - action_perguntar_llm
-  - validate_agendamento_consulta_form
-  - action_submit_agendamento
+      - nome
+      - cadastro_pessoa_f
 
 responses:
   utter_greet:
-    - text: "Olá! Como posso ajudar você hoje?"
+    - text: "Olá! Em que posso ajudar hoje?"
 
   utter_goodbye:
-    - text: "Até logo!"
+    - text: "Tchau! Até breve."
 
-  # Perguntas do formulário
   utter_ask_especialidade:
-    - text: "Para qual especialidade você gostaria de agendar a consulta?"
+    - text: "Qual especialidade médica você precisa?"
+
   utter_ask_data_consulta:
-    - text: "Para qual dia você gostaria de agendar? Ex.: 'amanhã', 'quarta-feira', '25 de julho'."
+    - text: "Qual a data desejada para a consulta?"
+
   utter_ask_hora_consulta:
-    - text: "E qual horário seria ideal? Ex.: '10h', 'às 14h'."
+    - text: "Qual o horário da consulta?"
+
   utter_ask_nome_medico:
-    - text: "Você tem preferência de médico? Se sim, informe o nome."
+    - text: "Há um médico de preferência?"
+
   utter_ask_motivo_consulta:
     - text: "Qual o motivo da consulta?"
 
-  # Resumo antes da confirmação
+  utter_ask_nome:
+    - text: "Qual o seu nome completo?"
+
+  utter_ask_cadastro_pessoa_f:
+    - text: "Você já é cadastrado(a) na nossa clínica?"
+
   utter_submit_agendamento_consulta_form:
-    - text: "Confirmando: {especialidade} em {data_consulta} às {hora_consulta} com {nome_medico} (motivo: {motivo_consulta}). Posso confirmar?"
+    - text: |
+        Confirmando:
+        Quero marcar uma consulta em {data_consulta} às {hora_consulta} com {nome_medico} ({especialidade}).
+        Motivo: {motivo_consulta}.
+        Nome do paciente: {nome}.
+        Cadastrado: {cadastro_pessoa_f}.
+        Posso confirmar?
 
-  utter_forms_deactivated:
-    - text: "Ok, cancelado."
+  utter_ask_affirm:
+    - text: "Certo! Posso confirmar o agendamento?"
 
-  utter_submit_agendamento_consulta_form:
-    - text: "Ok, aqui está o resumo do seu agendamento: [resumo aqui]. Você confirma?"
-
-  utter_horario_geral:
-    - text: "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h."
-
-  utter_horario_medico_info:
-    - text: "Para saber o horário de um médico específico, por favor, me diga o nome do médico."
-
-  utter_contato:
-    - text: "Você pode entrar em contato através do telefone (XX) XXXX-XXXX ou pelo e-mail contato@clinica.com."
-
-  utter_endereco:
-    - text: "Nosso endereço é Rua da Clínica, 123, Bairro Saúde, Cidade-UF."
-
-  utter_telefone:
-    - text: "Nosso telefone para contato é (XX) XXXX-XXXX."
-
-  utter_email:
-    - text: "contato@consultoriosaude.com.br."
-
-  # LLM
-  utter_ask_llm:
-    - text: "Processando..."
-  utter_debug_llm_call:
-    - text: "DEBUG: Chamando LLM..."
+  utter_ask_deny:
+    - text: "Tudo bem! O agendamento foi cancelado."
 
 actions:
-  - action_perguntar_llm
-  - validate_agendamento_consulta_form
   - action_submit_agendamento
-  # (Opcional) action_store_cpf se quiser tratar fornecer_cpf
+  - action_agendar_consulta
+  - action_cancelar_agendamento
 
 session_config:
   session_expiration_time: 60

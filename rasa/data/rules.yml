@@ -1,6 +1,7 @@
 version: "3.1"
 
 rules:
+
   # --- Básico ---
   - rule: Saudacao
     steps:
@@ -17,7 +18,7 @@ rules:
       - intent: bot_challenge
       - action: utter_iamabot
 
-  # --- Pergunta ao LLM ---
+  # --- Pergunta ao LLM (uso geral) ---
   - rule: Pergunta ao LLM
     steps:
       - intent: perguntar_ao_llm
@@ -31,39 +32,39 @@ rules:
       - action: agendamento_consulta_form
       - active_loop: agendamento_consulta_form
 
-  # --- Agendamento: cancelar durante preenchimento ---
+  # --- Cancelar agendamento durante preenchimento ---
   - rule: Cancelar agendamento durante form
     condition:
       - active_loop: agendamento_consulta_form
     steps:
       - or:
+          - intent: negar
           - intent: stop
-          - intent: deny
-      - action: utter_forms_deactivated
+      - action: utter_agendamento_cancelado
+      - action: action_reset_slots
       - active_loop: null
 
-  # --- Agendamento: form preencheu todos os slots ---
-  # Mostra resumo e aguarda confirmação do usuário
-  - rule: Resumo após form
+  # --- Agendamento: formulário foi preenchido ---
+  - rule: Mostrar resumo do agendamento
     condition:
       - active_loop: agendamento_consulta_form
     steps:
       - action: agendamento_consulta_form
       - active_loop: null
-      - action: utter_submit_agendamento_consulta_form
+      - action: action_confirmar_agendamento
 
-  # --- Confirmação do agendamento (após resumo) ---
+  # --- Confirmar agendamento após o resumo ---
   - rule: Confirmar agendamento
     steps:
       - intent: affirm
       - action: action_submit_agendamento
 
-  # --- Não confirmar agendamento (após resumo) ---
+  # --- Cancelar agendamento após o resumo ---
   - rule: Nao confirmar agendamento
     steps:
-      - intent: deny
-      - action: utter_forms_deactivated
-      - active_loop: null
+      - intent: negar
+      - action: utter_agendamento_cancelado
+      - action: action_reset_slots
 
   # --- FAQs ---
   - rule: Mostrar horario geral
@@ -71,7 +72,6 @@ rules:
       - intent: ask_horario_geral
       - action: utter_horario_geral
 
-  # Regra que usa o LLM para responder sobre os serviços
   - rule: Usar LLM para serviços
     steps:
       - intent: ask_servicos
