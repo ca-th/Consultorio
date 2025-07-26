@@ -1,0 +1,356 @@
+:root {
+  /* Cores padrão (tema claro) */
+  --sidebar-bg: #0b3d91;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #4d6edc;
+
+  --content-bg: #f3eeee;
+  --content-text: #222222;
+
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.1);
+
+  --font-family: 'Arial', sans-serif;
+
+  --theme-icon-hover: #4d6edc;
+}
+
+/* Tema escuro */
+body.dark-theme {
+  --sidebar-bg: #13163a;
+  --sidebar-text: #98c2d3;
+  --sidebar-hover: #6b8a97;
+
+  --content-bg: #1e224c;
+  --content-text: #f0f0f0;
+
+  --card-bg: #2a3055;
+  --card-shadow: rgba(0, 0, 0, 0.4);
+
+  --theme-icon-color: #98c2d3;
+  --theme-icon-hover: #6b8a97;
+}
+.dashboard {
+  display: flex;
+  height: 100vh;
+  font-family: var(--font-family);
+  background-color: var(--content-bg);
+  color: var(--content-text);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 20px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+  font-weight: 700;
+  font-size: 1.6rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  margin-bottom: 15px;
+}
+
+.sidebar a,
+.sidebar button {
+  color: var(--sidebar-text);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar a:hover,
+.sidebar button:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--content-bg);
+  text-decoration: none;
+}
+
+
+.perfil-container {
+    max-width: 450px; /* Largura máxima do cartão de perfil */
+    margin: 3rem auto; /* Centraliza o container horizontalmente com margem superior/inferior */
+    background: linear-gradient(135deg, #3b7cc3, #3989cf); /* Gradiente de fundo azul */
+    border-radius: 16px; /* Cantos arredondados */
+    box-shadow: 0 8px 20px rgba(30, 144, 255, 0.4); /* Sombra suave */
+    color: white; /* Cor do texto padrão */
+    font-family: 'Inter', sans-serif; /* ALTERADO: Usando Inter para consistência */
+    display: flex;
+    flex-direction: column; /* Itens agora se empilham verticalmente */
+    padding: 1.8rem 2rem; /* Preenchimento interno */
+    gap: 1.5rem; /* Espaçamento entre os itens flexíveis (foto, botões, info) */
+    align-items: center; /* Centraliza os itens horizontalmente dentro do container */
+    position: relative; /* Necessário para posicionamento absoluto de elementos internos, se houver */
+}
+
+/* Container da foto no estilo círculo com sombra */
+.foto-container {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 1rem;
+    margin: -29px 0 35px 0px;
+}
+
+/* Imagem da foto redonda */
+.foto-perfil {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%; /* Torna a imagem circular */
+    object-fit: cover; /* Garante que a imagem preencha o espaço sem distorcer */
+    border: 3px solid white; /* Borda branca ao redor da imagem */
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9); /* Sombra na imagem */
+    transition: box-shadow 0.3s ease; /* Transição suave na sombra ao passar o mouse */
+}
+
+.foto-perfil:hover {
+    box-shadow: 0 0 18px rgba(255, 255, 255, 1); /* Sombra mais intensa no hover */
+}
+
+/* Input de foto fica transparente e absoluto sobre a imagem para clique */
+.input-foto {
+    position: absolute;
+    width: 100%; /* Ocupa a largura total do .foto-container */
+    height: 100%; /* Ocupa a altura total do .foto-container */
+    top: 0;
+    left: 0;
+    opacity: 0; /* Torna o input invisível */
+    cursor: pointer; /* Indica que é clicável */
+    z-index: 10; /* Garante que o input esteja acima da imagem para capturar cliques */
+}
+
+/* Área de informações do perfil (nome, email, etc.) */
+.perfil-info {
+    flex: 1 1;
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px;
+    margin: -84px -68px 0 159px;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-content: center;
+}
+
+/* Labels com estilo */
+.perfil-info label {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    margin: 10px 156px -19px -72px;
+}
+
+/* Inputs transparentes com borda branca e texto branco */
+.perfil-info input,
+.perfil-info select {
+    margin-top: 0.3rem; /* Espaçamento entre a label e o input */
+    padding: 0.75rem 1rem; /* Preenchimento interno */
+    border-radius: 8px; /* Cantos arredondados */
+    border: 1.5px solid rgba(255, 255, 255, 0.7); /* Borda translúcida */
+    background: rgba(255, 255, 255, 0.15); /* Fundo translúcido */
+    color: rgb(0, 0, 0); /* Cor do texto */
+    font-size: 1rem;
+    transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease; /* Transições suaves */
+    font-family: inherit; /* Herda a fonte do pai */
+    width: 100%; /* Ocupa a largura total do container pai (.perfil-info) */
+    box-sizing: border-box; /* Garante que padding e border sejam incluídos na largura */
+}
+
+.perfil-info input:focus,
+.perfil-info select:focus {
+    outline: none; /* Remove o contorno padrão ao focar */
+    border-color: #ffd700; /* Borda amarela ao focar */
+    background: rgba(255, 255, 255, 0.35); /* Fundo mais visível ao focar */
+    box-shadow: 0 0 10px #ffd700; /* Sombra amarela ao focar */
+}
+
+/* Desabilitado com transparência */
+.perfil-info input:disabled,
+.perfil-info select:disabled {
+    color: #eee; /* Texto mais claro */
+    background: transparent; /* Fundo transparente */
+    border-color: rgba(255,255,255,0.4); /* Borda mais suave */
+    cursor: default; /* Cursor padrão */
+}
+
+/* Container dos botões ajustado */
+.perfil-botoes {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0;
+}
+
+.perfil-botoes button {
+    width: 61%;
+    height: 37px;
+    padding: 0.75px 4.2rem; 
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 2px solid white;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease; /* Adicionado transform para efeito de hover */
+    min-width: 100px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para dar profundidade */
+    font-family: 'Inter', sans-serif; /* ALTERADO: Usando Inter para consistência */
+}
+
+.perfil-botoes button:hover {
+    background-color: white;
+    color: #1e90ff;
+    transform: translateY(-2px); /* Efeito de "levantar" no hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra mais proeminente no hover */
+}
+
+/* Botão salvar com fundo branco e texto azul */
+.salvar {
+    background-color: #1e90ff;
+    color: #1e90ff;
+    
+}
+
+.salvar:hover {
+    color: #1e90ff;
+    background-color: #f0f0f0;
+}
+
+/* Botão cancelar */
+.cancelar {
+    background-color: #ff6b6b;
+    color: #ffffff;
+    
+}
+
+.cancelar:hover {
+    background-color: #ff6b6b !important;
+    color: white !important;
+    box-shadow: 0 4px 8px rgba(255, 107, 107, 0.4); /* Sombra vermelha no hover */
+}
+
+/* Botão editar perfil */
+.editar {
+    border-color: white !important;
+    color: white !important;
+    background: transparent !important; /* Garante que o fundo seja transparente */
+}
+
+.editar:hover {
+    background-color: white !important;
+    color: #1e90ff !important;
+}
+
+/* Estilos para o modal */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--sidebar-hover);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    margin: 0 0 0 204px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.btn-confirm {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 6px 19px;
+}
+
+.btn-confirm:hover {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+.btn-cancel {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin: 6px 19px;
+}
+
+.btn-cancel:hover {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+/* Responsividade: em telas pequenas empilha */
+@media (max-width: 500px) {
+    .perfil-container {
+        flex-direction: column; /* Garante que continue em coluna */
+        align-items: center; /* Centraliza itens */
+        padding: 2rem 1.5rem; /* Ajusta o padding */
+        gap: 1.5rem; /* Ajusta o espaçamento */
+    }
+    .perfil-info {
+        width: 100%; /* Ocupa a largura total */
+        max-width: 100%; /* Remove o limite de largura em telas pequenas */
+    }
+    .perfil-botoes {
+        justify-content: center; /* Garante que os botões permaneçam centralizados */
+        max-width: 100%; /* Remove o limite de largura em telas pequenas */
+    }
+}

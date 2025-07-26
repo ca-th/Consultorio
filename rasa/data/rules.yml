@@ -1,114 +1,103 @@
 version: "3.1"
 
 rules:
+  # --- Básico ---
+  - rule: Saudacao
+    steps:
+      - intent: greet
+      - action: utter_greet
 
-# --- Básico ---
-- rule: Saudacao
-  steps:
-    - intent: greet
-    - action: utter_greet
+  - rule: Despedida
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
 
-- rule: Despedida
-  steps:
-    - intent: goodbye
-    - action: utter_goodbye
+  - rule: Identidade do bot
+    steps:
+      - intent: bot_challenge
+      - action: utter_iamabot
 
-- rule: Identidade do bot
-  steps:
-    - intent: bot_challenge
-    - action: utter_iamabot
+  # --- Pergunta ao LLM ---
+  - rule: Pergunta ao LLM
+    steps:
+      - intent: perguntar_ao_llm
+      - action: utter_ask_llm
+      - action: action_perguntar_llm
 
-# --- Pergunta ao LLM ---
-- rule: Pergunta ao LLM
-  steps:
-    - intent: perguntar_ao_llm
-    - action: utter_ask_llm
-    - action: action_perguntar_llm
+  # --- Agendamento: ativar formulário ---
+  - rule: Ativar agendamento consulta
+    steps:
+      - intent: agendar_consulta
+      - action: agendamento_consulta_form
+      - active_loop: agendamento_consulta_form
 
-# --- Agendamento: ativar formulário ---
-- rule: Ativar agendamento consulta
-  steps:
-    - intent: agendar_consulta
-    - action: agendamento_consulta_form
-    - active_loop: agendamento_consulta_form
+  # --- Agendamento: cancelar durante preenchimento ---
+  - rule: Cancelar agendamento durante form
+    condition:
+      - active_loop: agendamento_consulta_form
+    steps:
+      - or:
+          - intent: stop
+          - intent: deny
+      - action: utter_forms_deactivated
+      - active_loop: null
 
-# --- Agendamento: cancelar durante preenchimento ---
-- rule: Cancelar agendamento durante form
-  condition:
-    - active_loop: agendamento_consulta_form
-  steps:
-    - or:
-        - intent: stop
-        - intent: deny
-    - action: utter_forms_deactivated
-    - active_loop: null
+  # --- Agendamento: form preencheu todos os slots ---
+  # Mostra resumo e aguarda confirmação do usuário
+  - rule: Resumo após form
+    condition:
+      - active_loop: agendamento_consulta_form
+    steps:
+      - action: agendamento_consulta_form
+      - active_loop: null
+      - action: utter_submit_agendamento_consulta_form
 
-# --- Agendamento: form preencheu todos os slots ---
-# Mostra resumo e aguarda confirmação do usuário
-- rule: Resumo após form
-  condition:
-    - active_loop: agendamento_consulta_form
-  steps:
-    - action: agendamento_consulta_form
-    - active_loop: null
-    - action: utter_submit_agendamento_consulta_form
+  # --- Confirmação do agendamento (após resumo) ---
+  - rule: Confirmar agendamento
+    steps:
+      - intent: affirm
+      - action: action_submit_agendamento
 
-# --- Confirmação do agendamento (após resumo) ---
-- rule: Confirmar agendamento
-  steps:
-    - intent: affirm
-    - action: action_submit_agendamento
+  # --- Não confirmar agendamento (após resumo) ---
+  - rule: Nao confirmar agendamento
+    steps:
+      - intent: deny
+      - action: utter_forms_deactivated
+      - active_loop: null
 
-# --- Não confirmar agendamento (após resumo) ---
-- rule: Nao confirmar agendamento
-  steps:
-    - intent: deny
-    - action: utter_forms_deactivated
-    - active_loop: null
-  wait_for_user_input: false
+  # --- FAQs ---
+  - rule: Mostrar horario geral
+    steps:
+      - intent: ask_horario_geral
+      - action: utter_horario_geral
 
-# --- FAQs ---
-- rule: Mostrar horario geral
-  steps:
-    - intent: ask_horario_geral
-    - action: utter_horario_geral
+  # Regra que usa o LLM para responder sobre os serviços
+  - rule: Usar LLM para serviços
+    steps:
+      - intent: ask_servicos
+      - action: action_perguntar_llm
 
-# Regra que usa o LLM para responder sobre os serviços
-- rule: Usar LLM para serviços
-  steps:
-    - intent: ask_servicos
-    - action: action_perguntar_llm
+  - rule: Mostrar horario medico especifico
+    steps:
+      - intent: ask_horario_medico_especifico
+      - action: utter_horario_medico_info
 
-- rule: Mostrar horario medico especifico
-  steps:
-    - intent: ask_horario_medico_especifico
-    - action: utter_horario_medico_info
+  - rule: Mostrar contato
+    steps:
+      - intent: ask_contato
+      - action: utter_contato
 
-- rule: Mostrar contato
-  steps:
-    - intent: ask_contato
-    - action: utter_contato
+  - rule: Mostrar endereco
+    steps:
+      - intent: ask_endereco
+      - action: utter_endereco
 
-- rule: Mostrar endereco
-  steps:
-    - intent: ask_endereco
-    - action: utter_endereco
+  - rule: Mostrar telefone
+    steps:
+      - intent: ask_telefone
+      - action: utter_telefone
 
-- rule: Mostrar telefone
-  steps:
-    - intent: ask_telefone
-    - action: utter_telefone
-
-- rule: Mostrar email
-  steps:
-    - intent: ask_email
-    - action: utter_email
-
-# --- CPF (opcional) ---
-# Se você quiser tratar CPF, implemente action_store_cpf e adicione no domain.
-# Por enquanto, apenas ecoa e não faz nada.
-# Comente ou remova se não usar e quiser sumir com o aviso.
-# - rule: Capturar CPF
-#   steps:
-#     - intent: fornecer_cpf
-#     - action: utter_contato   # trocar por action_store_cpf
+  - rule: Mostrar email
+    steps:
+      - intent: ask_email
+      - action: utter_email

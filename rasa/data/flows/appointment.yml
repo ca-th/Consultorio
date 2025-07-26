@@ -1,5 +1,0 @@
-flows:
-  appointment:
-    description: tell the user about his appointments
-    steps:
-      - action: utter_appointments
