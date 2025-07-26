@@ -108,7 +108,7 @@ npm start
 cd rasa
 
 # Crie um ambiente virtual
-python -m venv venv
+python -m venv venv_py310
 
 # Ative o ambiente virtual
 .\venv\Scripts\activate ou source venv_py310/Scripts/activate(recomendado)
