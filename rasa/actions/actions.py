@@ -11,6 +11,8 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
+import dateparser as dt
+
 # --- Importações de bibliotecas externas ---
 import requests
 # from datetime import datetime, timedelta # Descomente se for usar para validação de datas
@@ -18,11 +20,11 @@ import requests
 load_dotenv()  # Carrega as variáveis de ambiente do arquivo .env
 
 class DatabaseConnection(object):
-    def __init__(self, host: str, user: str, password: str, database: str):
-        self.host = os.getenv("HOST", host)
-        self.user = os.getenv("USER", user)
-        self.password = os.getenv("PASSWORD", password)
-        self.database = os.getenv("DATABASE", database)
+    def __init__(self):
+        self.host = os.getenv("HOST")
+        self.user = os.getenv("USER")
+        self.password = os.getenv("PASSWORD")
+        self.database = os.getenv("DATABASE")
         self.connection = None
 
     def connect(self):
@@ -41,6 +43,60 @@ class DatabaseConnection(object):
         except pymysql.MySQLError as e:
             print(f"Erro ao conectar ao banco de dados: {e}")
             return None
+    
+    def close(self):
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+
+    def execute_query(self, query: str, params: Union[tuple, dict] = None):
+        connection = self.connect()
+        if not connection:
+            return None
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params or ())
+                result = cursor.fetchall()
+                connection.commit()
+                return result
+        except pymysql.MySQLError as e:
+            print(f"Erro ao executar a consulta: {e}")
+            return None
+        finally:
+            self.close()
+     
+    def execute_fetchall(self, query: str, params: Union[tuple, dict] = None):
+        """Executa uma consulta e retorna todos os resultados."""
+        connection = self.connect()
+        if not connection:
+            return None
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params or ())
+                return cursor.fetchall()
+        except pymysql.MySQLError as e:
+            print(f"Erro ao executar a consulta: {e}")
+            return None
+        finally:
+            self.close()
+
+    def execute_fetchone(self, query: str, params: Union[tuple, dict] = None):
+        """Executa uma consulta e retorna o primeiro resultado."""
+        connection = self.connect()
+        if not connection:
+            return None
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params or ())
+                return cursor.fetchone()
+        except pymysql.MySQLError as e:
+            print(f"Erro ao executar a consulta: {e}")
+            return None
+        finally:
+            self.close()
 
 # --- Ação para perguntar ao LLM ---
 class ActionPerguntarLLM(Action):
@@ -100,19 +156,29 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         """Valida o slot 'especialidade'."""
-        especialidades_validas = [
-            "cardiologia", "dermatologia", "pediatria", "ortopedia", "ginecologia",
-            "clínico geral", "odontologia", "neurologia", "oftalmologia", "urologia",
-            "consulta geral", # Adicionado do NLU
-        ]
-        if slot_value and slot_value.lower() in especialidades_validas:
-            dispatcher.utter_message(text=f"Entendido, especialidade: {slot_value.capitalize()}.")
-            return {"especialidade": slot_value}
-        elif slot_value:
-            dispatcher.utter_message(text="Desculpe, essa especialidade não está disponível ou não entendi. Poderia informar novamente?")
-            return {"especialidade": None}
-        else:
-            return {"especialidade": None} # Mantém o slot sem preencher
+
+        db = DatabaseConnection()
+        conn = db.connect()
+        especialidade = tracker.get_slot("especialidade")
+
+        if especialidade and conn:
+            try:
+                # Consulta as especialidades disponíveis no banco de dados
+                query = "SELECT * FROM especialidades WHERE especialidade = %s"
+                params = (especialidade.lower(),)  # Certifique-se de que o valor esteja em minúsculas
+                result = db.execute_query(query, params)
+
+                if result:
+                    return [SlotSet("especialidade", especialidade)]
+                else:
+                    dispatcher.utter_message(text="Desculpe, não encontramos essa especialidade. Por favor, tente novamente.")
+                    return [SlotSet("especialidade", None)]
+
+            except Exception as e:
+                dispatcher.utter_message(text=f"Erro ao consultar especialidades: {e}")
+                return [SlotSet("especialidade", None)]
+            finally:
+                db.close()
 
     async def validate_data_consulta(
         self,
@@ -123,14 +189,17 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
     ) -> Dict[Text, Any]:
         """Valida o slot 'data_consulta'."""
         # TODO: Implementar validação de data mais robusta aqui (ex: usar dateparser, verificar futuro)
-        if slot_value:
-            # Exemplo básico: apenas confirma que recebeu algo.
-            # Você deve adicionar lógica para garantir que é uma data real e futura, etc.
-            dispatcher.utter_message(text=f"Data selecionada: {slot_value}.")
-            return {"data_consulta": slot_value}
-        else:
-            dispatcher.utter_message(text="Por favor, forneça uma data válida para a consulta. Ex: 'amanhã', '25 de julho'.")
-            return {"data_consulta": None}
+
+        data = tracker.get_slot("data_consulta")
+        if data:
+            # Usa dateparser para reconhecer datas em linguagem natural
+            parsed_date = dt.parse(data)
+            
+            if parsed_date and parsed_date >= dt.datetime.now() - dt.timedelta(days=1):
+                return {"data_consulta": parsed_date.strftime("%d-%m-%Y")}
+            else:
+                dispatcher.utter_message(text="Essa não parece ser uma data válida ou é uma data no passado. Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho').")
+                return {"data_consulta": None}
 
     async def validate_hora_consulta(
         self,
@@ -156,13 +225,27 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         """Valida o slot 'nome_medico'."""
-        if slot_value and len(slot_value) >= 3: # Exemplo: nome com pelo menos 3 caracteres
-            dispatcher.utter_message(text=f"Médico(a) escolhido(a): {slot_value}.")
-            return {"nome_medico": slot_value}
-        else:
-            dispatcher.utter_message(text="Por favor, me diga o nome completo do médico ou se não tem preferência.")
-            return {"nome_medico": None}
 
+        medico = tracker.get_slot("nome_medico")
+        db = DatabaseConnection()
+        conn = db.connect()
+
+        if medico and conn:
+            try:
+                query = "SELECT * FROM medicos WHERE nome LIKE %s"
+                params = (f"%{medico.lower()}%",)  # Busca por nome similar
+                result = db.execute_query(query, params)
+
+                if result:
+                    return [SlotSet("nome_medico", result[0]['nome'])]  # Retorna o primeiro médico encontrado
+                else:
+                    dispatcher.utter_message(text="Desculpe, não encontramos esse médico. Por favor, tente novamente.")
+                    return [SlotSet("nome_medico", None)]
+
+            except Exception as e:
+                dispatcher.utter_message(text=f"Erro ao consultar médicos: {e}")
+                return [SlotSet("nome_medico", None)]
+                   
     async def validate_motivo_consulta(
         self,
         slot_value: Any,
@@ -193,22 +276,6 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
             dispatcher.utter_message(text="Por favor, informe seu nome completo.")
             return {"nome": None}
 
-    async def validate_cadastro_pessoa_f(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        """Valida o slot 'cadastro_pessoa_f' (CPF)."""
-        # Exemplo de validação de CPF (muito básica)
-        # TODO: Implementar validação de CPF real (formato, dígitos verificadores)
-        if slot_value and (len(slot_value) == 11 or len(slot_value) == 14 and '-' in slot_value):
-            dispatcher.utter_message(text=f"CPF registrado: {slot_value}.")
-            return {"cadastro_pessoa_f": slot_value}
-        else:
-            dispatcher.utter_message(text="Por favor, informe um CPF válido (somente números ou com pontos e hífen).")
-            return {"cadastro_pessoa_f": None}
 
 # --- Ação para submeter o agendamento (após confirmação do resumo) ---
 class ActionSubmitAgendamento(Action):
