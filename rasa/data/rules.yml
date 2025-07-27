@@ -1,7 +1,6 @@
 version: "3.1"
 
 rules:
-
   # --- Básico ---
   - rule: Saudacao
     steps:
@@ -19,54 +18,64 @@ rules:
       - action: utter_iamabot
 
   # --- Pergunta ao LLM (uso geral) ---
+  # Esta regra ativa a ação personalizada action_perguntar_llm
   - rule: Pergunta ao LLM
     steps:
       - intent: perguntar_ao_llm
-      - action: utter_ask_llm
-      - action: action_perguntar_llm
+      - action: action_perguntar_llm # Esta ação deve estar implementada em actions/actions.py
 
   # --- Agendamento: ativar formulário ---
+  # Esta regra ativa o formulário 'agendamento_consulta_form'
   - rule: Ativar agendamento consulta
     steps:
       - intent: agendar_consulta
-      - action: agendamento_consulta_form
-      - active_loop: agendamento_consulta_form
+      - action: agendamento_consulta_form # Chama o formulário para preencher os slots
+      - active_loop: agendamento_consulta_form # Ativa o loop do formulário
 
-  # --- Cancelar agendamento durante preenchimento ---
+  # --- Agendamento: cancelar durante preenchimento do formulário ---
+  # Esta regra detecta intenções de parada/negação enquanto o formulário está ativo
   - rule: Cancelar agendamento durante form
     condition:
-      - active_loop: agendamento_consulta_form
+      - active_loop: agendamento_consulta_form # A regra só se aplica se o formulário estiver ativo
     steps:
       - or:
-          - intent: negar
-          - intent: stop
-      - action: utter_agendamento_cancelado
-      - action: action_reset_slots
-      - active_loop: null
+        - intent: stop # Se o usuário disser algo como "cancelar"
+        - intent: deny # Se o usuário disser "não" ou negar
+      - action: utter_forms_deactivated # Resposta que o formulário foi desativado
+      - active_loop: null # Desativa o loop do formulário (muito importante!)
+      # Opcional: Você pode chamar uma ação personalizada para limpar slots ou desfazer algo
+      # - action: action_cancelar_agendamento # Se você tiver uma ação para limpar slots, etc.
 
-  # --- Agendamento: formulário foi preenchido ---
-  - rule: Mostrar resumo do agendamento
+  # --- Agendamento: formulário preencheu todos os slots ---
+  # Esta regra é disparada quando o formulário 'agendamento_consulta_form' é concluído (todos os slots preenchidos).
+  # **** ESTA É A REGRA QUE FOI CORRIGIDA! ****
+  - rule: Resumo após form
     condition:
-      - active_loop: agendamento_consulta_form
+      - active_loop: agendamento_consulta_form # Verifica se o formulário estava ativo
     steps:
-      - action: agendamento_consulta_form
-      - active_loop: null
-      - action: action_confirmar_agendamento
+      # O formulário já foi concluído e seu método 'submit' em actions.py já foi chamado
+      # Não precisamos chamar 'action: agendamento_consulta_form' novamente aqui.
+      - active_loop: null # Desativa o loop do formulário (essencial)
+      - action: utter_submit_agendamento_consulta_form # Proferir a resposta de resumo
 
-  # --- Confirmar agendamento após o resumo ---
+  # --- Confirmação do agendamento (após resumo) ---
+  # Esta regra processa a confirmação do usuário após o resumo do agendamento.
+  # Pode ser muito ampla se o 'affirm' for usado em outros contextos.
+  # Considere usar uma "story" mais específica ou um 'form_validation_action' para o slot de confirmação.
   - rule: Confirmar agendamento
     steps:
-      - intent: affirm
-      - action: action_submit_agendamento
+      - intent: affirm # Se o usuário disser "sim" ou confirmar
+      - action: action_submit_agendamento # Ação para finalizar o agendamento
 
-  # --- Cancelar agendamento após o resumo ---
+  # --- Não confirmar agendamento (após resumo) ---
+  # Esta regra processa a negação do usuário após o resumo do agendamento.
   - rule: Nao confirmar agendamento
     steps:
-      - intent: negar
-      - action: utter_agendamento_cancelado
-      - action: action_reset_slots
+      - intent: deny # Se o usuário disser "não"
+      - action: utter_forms_deactivated # Resposta de desativação
+      - active_loop: null # Desativa o loop (importante para evitar confusão)
 
-  # --- FAQs ---
+  # --- FAQs (Perguntas Frequentes) ---
   - rule: Mostrar horario geral
     steps:
       - intent: ask_horario_geral
@@ -75,7 +84,7 @@ rules:
   - rule: Usar LLM para serviços
     steps:
       - intent: ask_servicos
-      - action: action_perguntar_llm
+      - action: action_perguntar_llm # Reusa a ação de perguntar ao LLM
 
   - rule: Mostrar horario medico especifico
     steps:

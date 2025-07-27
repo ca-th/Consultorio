@@ -1,0 +1,31 @@
+version: '3.8' # Use uma versão recente do Docker Compose
+
+services:
+  rasa: # Nome do serviço Rasa
+    container_name: rasa_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./config.yml:/app/config.yml
+      - ./domain.yml:/app/domain.yml
+      - ./endpoints.yml:/app/endpoints.yml
+    command: ["rasa", "run", "--enable-api", "--port", "5005", "--debug", "--model", "models/20250726-231142-instant-dynamic.tar.gz"]
+    environment:
+      - RASA_CORE_SERVER_URL=http://rasa-actions:5055 # Aqui ele depende do nome 'rasa-actions'
+    depends_on:
+      - rasa-actions # E aqui também
+
+  rasa-actions: # <--- ESTE NOME PRECISA SER EXATAMENTE IGUAL ao que foi referenciado acima
+    container_name: rasa_actions_server
+    build:
+      context: ./actions
+      dockerfile: Dockerfile
+    ports:
+      - "5055:5055"
+    volumes:
+      - ./actions:/app

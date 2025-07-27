@@ -14,6 +14,14 @@ intents:
   - inform_reason
   - afirma_rotina
   - nega_rotina
+  - perguntar_ao_llm # Confirme se esta intent está aqui, ela está em suas regras
+  - ask_horario_geral # Confirme se estas intents de FAQ estão aqui
+  - ask_servicos
+  - ask_horario_medico_especifico
+  - ask_contato
+  - ask_endereco
+  - ask_telefone
+  - ask_email
 
 entities:
   - especialidade
@@ -23,6 +31,7 @@ entities:
   - motivo_consulta
   - nome
   - cadastro_pessoa_f
+  # - sintoma_texto # Se você usa esta entidade em algum NLU ou história, adicione-a aqui
 
 slots:
   especialidade:
@@ -121,10 +130,41 @@ responses:
   utter_ask_deny:
     - text: "Tudo bem! O agendamento foi cancelado."
 
+  # --- RESPOSTAS CORRIGIDAS/ADICIONADAS ---
+  utter_iamabot:
+    - text: "Eu sou um assistente virtual, não um humano."
+
+  utter_forms_deactivated:
+    - text: "Ok, o formulário foi desativado."
+
+  utter_horario_geral:
+    - text: "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h."
+
+  utter_horario_medico_info:
+    - text: "Para saber o horário de um médico específico, por favor, me diga o nome dele."
+
+  utter_contato:
+    - text: "Você pode nos contatar pelo telefone (XX) XXXX-XXXX ou e-mail contato@clinica.com."
+
+  utter_endereco:
+    - text: "Estamos localizados na Rua Exemplo, 123, Bairro Centro, Cidade."
+
+  utter_telefone:
+    - text: "Nosso telefone é (XX) XXXX-XXXX."
+
+  utter_email:
+    - text: "Nosso e-mail é contato@clinica.com."
+
+  # --- SE VOCÊ TIVER AÇÃO 'action_perguntar_llm', ELA PODE TER UMA UTTTER ANTES ---
+  # utter_ask_llm:
+  #   - text: "Certo, vou verificar isso com o LLM."
+
+
 actions:
   - action_submit_agendamento
   - action_agendar_consulta
   - action_cancelar_agendamento
+  - action_perguntar_llm # Certifique-se que esta ação customizada está listada aqui
 
 session_config:
   session_expiration_time: 60
