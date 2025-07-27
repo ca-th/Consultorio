@@ -7,9 +7,40 @@ from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet, EventType
 from rasa_sdk.forms import FormValidationAction # Mantido apenas esta importação de forms
 
+import pymysql
+import os
+from dotenv import load_dotenv
+
 # --- Importações de bibliotecas externas ---
 import requests
 # from datetime import datetime, timedelta # Descomente se for usar para validação de datas
+
+load_dotenv()  # Carrega as variáveis de ambiente do arquivo .env
+
+class DatabaseConnection(object):
+    def __init__(self, host: str, user: str, password: str, database: str):
+        self.host = os.getenv("HOST", host)
+        self.user = os.getenv("USER", user)
+        self.password = os.getenv("PASSWORD", password)
+        self.database = os.getenv("DATABASE", database)
+        self.connection = None
+
+    def connect(self):
+        if self.connection:
+            return self.connection
+
+        try:
+            self.connection = pymysql.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                database=self.database,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+            return self.connection
+        except pymysql.MySQLError as e:
+            print(f"Erro ao conectar ao banco de dados: {e}")
+            return None
 
 # --- Ação para perguntar ao LLM ---
 class ActionPerguntarLLM(Action):
