@@ -3,6 +3,6 @@ flows:
   specialties:
     description: the user wants to know what are the medical specialties
     steps:
-      - collect: specialty
+      - collect: especialidade
         description: what medical specialty the user wants more information about
-      - action: utter_specialty_times
+      - action: utter_ask_especialidade_info

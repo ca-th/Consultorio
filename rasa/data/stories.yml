@@ -15,6 +15,8 @@ stories:
       - action: agendamento_consulta_form
       - intent: inform_motivo
       - action: agendamento_consulta_form
+      - intent: inform_motivo_consulta_tipo
+      - action: agendamento_consulta_form
       - active_loop: null
       - action: utter_submit_agendamento_consulta_form
       - intent: affirm

@@ -129,9 +129,6 @@ python -m pip install --upgrade pip
 # Instale o Rasa Pro
 uv pip install rasa-pro
 
-# Crie um ambiente virtual
-python -m venv venv
-
 # Ative a licença do Rasa Pro (O Hash está no arquivo .env na pasta rasa)
 # macOS e Linux
 export RASA_PRO_LICENSE=YOUR_LICENSE_KEY

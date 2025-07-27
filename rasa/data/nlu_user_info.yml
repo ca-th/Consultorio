@@ -1,17 +1,6 @@
 version: "3.1"
 
 nlu:
-  # --- INTENÇÃO EXISTENTE (fornecer_cpf) ---
-  - intent: fornecer_cpf
-    examples: |
-      - meu CPF é [123.456.789-00](cadastro_pessoa_f)
-      - meu cadastro é [98765432100](cadastro_pessoa_f)
-      - o CPF é [000.111.222-33](cadastro_pessoa_f)
-      - meu número de documento é [44455566677](cadastro_pessoa_f)
-      - meu cpf [111.222.333-44](cadastro_pessoa_f)
-      - [55566677788](cadastro_pessoa_f)
-      - é [99999999999](cadastro_pessoa_f)
-
   # --- INTENÇÕES GERAIS ---
   - intent: greet
     examples: |
@@ -61,6 +50,30 @@ nlu:
       - esquece
       - para o agendamento
       - quero cancelar o agendamento
+
+  - intent: thank_you
+    examples: |
+      - obrigado
+      - obrigada
+      - valeu
+      - agradeço
+      - muito obrigado
+      - muito obrigada
+      - grato
+      - grata
+  
+  - intent: bot_challenge
+    examples: |
+      - quem é você?
+      - o que você faz?
+      - qual é o seu nome?
+      - o que você pode fazer?
+      - me conte sobre você
+      - qual é a sua função?
+      - o que você sabe fazer?
+      - como posso te ajudar?
+      - o que você faz aqui?
+      - qual é a sua tarefa?
 
   # --- INTENÇÕES PARA O FORMULÁRIO DE AGENDAMENTO ---
   - intent: agendar_consulta
@@ -124,6 +137,14 @@ nlu:
       - por causa de [uma tosse que não passa](motivo_consulta)
       - [sinto tonturas e cansaço](motivo_consulta)
       - [para check-up anual](motivo_consulta)
+
+  - intent: inform_motivo_consulta_tipo
+    examples: |
+      - é [consulta de rotina](motivo_consulta_tipo)
+      - preciso de uma [consulta de emergência](motivo_consulta_tipo)
+      - para [consulta de acompanhamento](motivo_consulta_tipo)
+      - uma [consulta de rotina](motivo_consulta_tipo)
+      
 
   - intent: inform_nome
     examples: |
@@ -197,21 +218,21 @@ nlu:
       - me passa o email de vocês?
       - qual o email para contato?
 
-  - intent: ask_exames
-    examples: |
-      - vocês fazem exames?
-      - quais exames a clínica oferece?
-      - que tipo de exame posso fazer?
-      - quais exames de rotina?
-      - posso agendar um exame?
+  # - intent: ask_exames
+  #   examples: |
+  #     - vocês fazem exames?
+  #     - quais exames a clínica oferece?
+  #     - que tipo de exame posso fazer?
+  #     - quais exames de rotina?
+  #     - posso agendar um exame?
 
-  - intent: ask_precos
-    examples: |
-      - qual o preço da consulta?
-      - quanto custa uma consulta?
-      - qual o valor da consulta?
-      - quanto custa o exame?
-      - preços das consultas
+  # - intent: ask_precos
+  #   examples: |
+  #     - qual o preço da consulta?
+  #     - quanto custa uma consulta?
+  #     - qual o valor da consulta?
+  #     - quanto custa o exame?
+  #     - preços das consultas
 
   # --- INTENÇÃO PARA PERGUNTAS AO LLM EXTERNO ---
   - intent: perguntar_ao_llm

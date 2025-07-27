@@ -81,7 +81,7 @@ class ActionPerguntarLLM(Action):
 # ====================================================================
 class ActionPerguntarSlotLLM(Action):
     def name(self) -> Text:
-        return "action_perguntar_slot_llm"
+        return "agendamento_consulta_form"
 
     async def run(
         self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]

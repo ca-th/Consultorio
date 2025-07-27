@@ -1,4 +1,4 @@
-version: "3.6"
+version: "3.1"
 
 recipe: default.v1
 language: pt
@@ -11,25 +11,25 @@ intents:
   - deny
   - thank_you
   # --- Intenções do Formulário (mantidas para Histórias) ---
-  - inform_specialty
-  - inform_date
-  - inform_time
-  - inform_doctor
-  - inform_reason
+  - inform_especialidade
+  - inform_data_hora
+  - inform_nome_medico
+  - inform_motivo
+  - inform_motivo_consulta_tipo
   # --- Intenções ADICIONADAS para corresponder às Regras ---
+  - inform_nome
   - bot_challenge
   - perguntar_ao_llm # Nome unificado (antes era ask_llm)
   - agendar_consulta
   - stop
   - ask_horario_geral
   - ask_servicos
+  #- ask_exames
   - ask_horario_medico_especifico
   - ask_contato
   - ask_endereco
   - ask_telefone
   - ask_email
-  - fornecer_cpf        # remova se não usar agora
-  - perguntar_ao_llm
 
 entities:
   - especialidade
@@ -37,27 +37,39 @@ entities:
   - hora_consulta
   - nome_medico
   - motivo_consulta
-  - cadastro_pessoa_f    # remova se tirar fornecer_cpf
+  - motivo_consulta_tipo
 
 slots:
+  user_name:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_text
+        conditions:
+          - active_loop: greet_user
+          - requested_slot: user_name
+
   especialidade:
     type: text
     influence_conversation: true
     mappings:
       - type: from_entity
         entity: especialidade
+
   data_consulta:
     type: text
     influence_conversation: true
     mappings:
       - type: from_entity
         entity: data_consulta
+
   hora_consulta:
     type: text
     influence_conversation: true
     mappings:
       - type: from_entity
         entity: hora_consulta
+
   nome_medico:
     type: text
     influence_conversation: true
@@ -79,13 +91,15 @@ slots:
         conditions:
           - active_loop: agendamento_consulta_form
           - requested_slot: motivo_consulta
-
-  cadastro_pessoa_f:
+  
+  motivo_consulta_tipo:
     type: text
     influence_conversation: true
     mappings:
-      - type: from_entity
-        entity: motivo_consulta
+      - type: from_text
+        conditions:
+          - active_loop: agendamento_consulta_form
+          - requested_slot: motivo_consulta_tipo
 
 forms:
   agendamento_consulta_form:
@@ -96,9 +110,6 @@ forms:
       - hora_consulta
       - nome_medico
       - motivo_consulta
-    # Esta linha é a mais importante. Ela diz ao Rasa para chamar a ação customizada
-    # para perguntar por cada slot, em vez de usar as respostas pre-definidas.
-    ask_slot_action: action_perguntar_slot_llm
 
 actions:
   - action_perguntar_llm
@@ -109,8 +120,15 @@ responses:
   utter_greet:
     - text: "Olá! Como posso ajudar você hoje?"
 
+  utter_user_name:
+    - text: "Poderia informar o seu nome?"
+
+  utter_introduce_user:
+    - text: "Prazer em conhecê-lo, {user_name}! Sou o assistente virtual do Consultório. Como posso ajudar você hoje?"
+
   utter_goodbye:
     - text: "Até logo!"
+
 
   # Perguntas do formulário
   utter_ask_especialidade:
@@ -131,8 +149,8 @@ responses:
   utter_forms_deactivated:
     - text: "Ok, cancelado."
 
-  utter_submit_agendamento_consulta_form:
-    - text: "Ok, aqui está o resumo do seu agendamento: [resumo aqui]. Você confirma?"
+  utter_ask_especialidade_info:
+    - text: "Qual especialidade você gostaria de consultar?"
 
   utter_horario_geral:
     - text: "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h."
@@ -157,12 +175,6 @@ responses:
     - text: "Processando..."
   utter_debug_llm_call:
     - text: "DEBUG: Chamando LLM..."
-
-actions:
-  - action_perguntar_llm
-  - validate_agendamento_consulta_form
-  - action_submit_agendamento
-  # (Opcional) action_store_cpf se quiser tratar fornecer_cpf
 
 session_config:
   session_expiration_time: 60

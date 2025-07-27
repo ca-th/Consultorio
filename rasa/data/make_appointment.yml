@@ -3,10 +3,10 @@ flows:
   make_appointment:
     description: schedule an appointment with a doctor
     steps:
-      - collect: choose_specialty
+      - collect: especialidade
         description: the user needs to choose a specialty to make an appointment with a doctor
         
-      - collect: choose_time
+      - collect: data_hora_consulta
         description: the user needs to choose the time that appointment will happen
 
-      - action: utter_appointment_scheduled
+      - action: utter_submit_agendamento_consulta_form

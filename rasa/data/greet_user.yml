@@ -3,22 +3,12 @@ flows:
   greet_user:
     description: Flow for starting the conversation and greet the user
     steps:
-      - action: utter_greet_user
+      - action: utter_greet
+
+      - action: utter_user_name
       
       - collect: user_name
         description: collect the name of the user
-        
-      - collect: cadastro_pessoa_f
-        description: an identification 11 digits number
-
-      - action: action_check_existing_user
-        next:
-          - if: not slots.user_exists
-            then:
-            - action: utter_inexistant_user
-              next: END
-          - else: introduce_user
-            next: END
 
       - action: utter_introduce_user
         id: introduce_user
