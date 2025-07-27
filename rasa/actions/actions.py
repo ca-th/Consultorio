@@ -196,7 +196,25 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
             parsed_date = dt.parse(data)
             
             if parsed_date and parsed_date >= dt.datetime.now() - dt.timedelta(days=1):
-                return {"data_consulta": parsed_date.strftime("%d-%m-%Y")}
+                db = DatabaseConnection()
+                conn = db.connect()
+                if conn:
+                    try:
+                        # Verifica se já existe agendamento disponível para essa data
+                        query = "SELECT * FROM datas WHERE data = %s"
+                        params = (parsed_date.strftime('%Y-%m-%d'))
+                        result = db.execute_query(query, params)
+
+                        if result:
+                            return [SlotSet("data_consulta", parsed_date.strftime('%Y-%m-%d'))]
+                        else:
+                            dispatcher.utter_message(text="Desculpe, não encontramos disponibilidade para essa data. Por favor, escolha outra.")
+                            return [SlotSet("data_consulta", None)]
+                    except Exception as e:
+                        dispatcher.utter_message(text=f"Erro ao consultar datas: {e}")
+                        return [SlotSet("data_consulta", None)]
+                    finally:
+                        db.close()
             else:
                 dispatcher.utter_message(text="Essa não parece ser uma data válida ou é uma data no passado. Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho').")
                 return {"data_consulta": None}
@@ -209,13 +227,31 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         """Valida o slot 'hora_consulta'."""
-        # TODO: Implementar validação de hora mais robusta (ex: HH:MM, dentro do horário de funcionamento)
-        if slot_value and (":" in slot_value or "h" in slot_value.lower()):
-            dispatcher.utter_message(text=f"Horário: {slot_value}.")
-            return {"hora_consulta": slot_value}
-        else:
-            dispatcher.utter_message(text="Por favor, insira um horário válido. Ex: '10h', '14:30'.")
-            return {"hora_consulta": None}
+        hora = tracker.get_slot("hora_consulta")
+
+        if hora:
+            # Usa dateparser para reconhecer horários em linguagem natural
+            parsed_time = dt.parse(hora, settings={'TIMEZONE': 'UTC'})
+            db = DatabaseConnection()
+            conn = db.connect()
+
+            if parsed_time and conn:
+                try:
+                    # Verifica se já existe agendamento disponível para essa hora
+                    query = "SELECT * FROM horarios WHERE hora = %s"
+                    params = (parsed_time.strftime('%H:%M'),)  # Formato de hora
+                    result = db.execute_query(query, params)
+
+                    if result:
+                        return [SlotSet("hora_consulta", parsed_time.strftime('%H:%M'))]
+                    else:
+                        dispatcher.utter_message(text="Desculpe, não tem disponibilidade para esse horário. Por favor, escolha outro.")
+                        return [SlotSet("hora_consulta", None)]
+                except Exception as e:
+                    dispatcher.utter_message(text=f"Erro ao consultar horários: {e}")
+                    return [SlotSet("hora_consulta", None)]
+                finally:
+                    db.close()
 
     async def validate_nome_medico(
         self,
@@ -254,12 +290,14 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         """Valida o slot 'motivo_consulta'."""
-        if slot_value and len(slot_value) > 5: # Exemplo: motivo precisa ter mais de 5 caracteres
+        motivo_consulta = tracker.get_slot("motivo_consulta")
+
+        if motivo_consulta and len(motivo_consulta) > 5 and len(motivo_consulta) < 255:
             dispatcher.utter_message(text="Motivo registrado.")
-            return {"motivo_consulta": slot_value}
+            return [SlotSet("motivo_consulta", motivo_consulta)]
         else:
-            dispatcher.utter_message(text="Por favor, descreva o motivo da consulta com mais detalhes.")
-            return {"motivo_consulta": None}
+            dispatcher.utter_message(text="Por favor, descreva o motivo novamente (mínimo de 5 caracteres e máximo de 255).")
+            return [SlotSet("motivo_consulta", None)]
 
     async def validate_nome(
         self,
@@ -269,12 +307,14 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         """Valida o slot 'nome' (nome do paciente)."""
-        if slot_value and len(slot_value) >= 3:
-            dispatcher.utter_message(text=f"Seu nome: {slot_value.capitalize()}.")
-            return {"nome": slot_value}
+        nome_paciente = tracker.get_slot("nome")
+        
+        if nome_paciente and len(nome_paciente) >= 3 and len(nome_paciente) <= 100:
+            dispatcher.utter_message("Nome registrado com sucesso!")
+            return [SlotSet("nome", nome_paciente)]
         else:
-            dispatcher.utter_message(text="Por favor, informe seu nome completo.")
-            return {"nome": None}
+            dispatcher.utter_message(text="Por favor, informe seu nome novamente.")
+            return [SlotSet("nome", None)]
 
 
 # --- Ação para submeter o agendamento (após confirmação do resumo) ---
