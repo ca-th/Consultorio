@@ -476,12 +476,20 @@ class ActionSubmitAgendamento(Action):
                     return []
                 id_horario = result_hora["id_horario"]
 
+                # 4. Buscar id_especialidade
+                query_especialidade = "SELECT id_especialidade FROM especialidades WHERE LOWER(nome) LIKE %s"
+                result_especialidade = db.execute_fetchone(query_especialidade, (especialidade.lower(),))
+                if not result_especialidade:
+                    dispatcher.utter_message(text="Especialidade não encontrada.")
+                    return []
+                id_especialidade = result_especialidade["id_especialidade"]
+
                 # 4. Inserir agendamento na tabela agenda
                 query_insert = """
-                    INSERT INTO agenda (id_medico, id_data, id_horario, motivo_consulta, nome_paciente)
+                    INSERT INTO agenda (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
                     VALUES (%s, %s, %s, %s, %s)
                 """
-                params_insert = (id_medico, id_data, id_horario, motivo_consulta, nome_paciente)
+                params_insert = (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
                 
                 if not db.execute_write(query_insert, params_insert):
                     dispatcher.utter_message(text="Erro ao registrar o agendamento no banco de dados.")
