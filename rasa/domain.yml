@@ -70,11 +70,10 @@ slots:
         entity: nome
 
   disponibilidade:
-    type: boolean
+    type: bool
     initial_value: false
     mappings:
-      - type: from_entity
-        entity: disponibilidade
+      - type: custom
 
 forms:
   agendamento_consulta_form:

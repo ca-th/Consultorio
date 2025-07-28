@@ -4,7 +4,7 @@ from typing import Any, Text, Dict, List, Union, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
-from rasa_sdk.events import SlotSet, EventType
+from rasa_sdk.events import SlotSet, EventType, AllSlotsReset, FollowupAction
 from rasa_sdk.forms import FormValidationAction # Mantido apenas esta importação de forms
 
 import pymysql
@@ -259,7 +259,7 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
                     try:
                         # Verifica se já existe agendamento disponível para essa hora
                         query = "SELECT * FROM horarios WHERE hora = %s"
-                        params = (parsed_time.strftime('%H:%M'),)  # Formato de hora
+                        params = (parsed_time.strftime('%H:%M:00'),)  # Formato de hora
                         result = db.execute_fetchone(query, params)
 
                         if result:
@@ -425,93 +425,134 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
             text="Não foi possível confirmar a disponibilidade. Por favor, verifique os dados informados."
         )
         return [SlotSet("disponibilidade", False)]
+    
+    async def submit(
+        self, 
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
+        
+        especialidade = tracker.get_slot("especialidade")
+        data_consulta = dt.parse(tracker.get_slot("data_consulta")).strftime('%d-%m-%y') if tracker.get_slot("data_consulta") else None
+        hora_consulta = dt.parse((tracker.get_slot("hora_consulta")), settings={'TIMEZONE': 'UTC'}).strftime('%H:%M') if tracker.get_slot("hora_consulta") else None
+        nome_medico = tracker.get_slot("nome_medico")
+        motivo_consulta = tracker.get_slot("motivo_consulta")
+        nome_paciente = tracker.get_slot("nome")
 
+        dispatcher.utter_message(
+            text=f"Vamos revisar seu agendamento:\n\n"
+                f"👤 {nome_paciente}\n"
+                f"📋 {especialidade}\n"
+                f"👨‍⚕️ {nome_medico}\n"
+                f"📅 {data_consulta} às {hora_consulta}\n"
+                f"📝 Motivo: {motivo_consulta}\n\n"
+                f"👉 Você confirma esse agendamento? (sim/não)"
+            )
 
-# --- Ação para submeter o agendamento (após confirmação do resumo) ---
-class ActionSubmitAgendamento(Action):
+        return [
+            SlotSet("requested_slot", None),
+            FollowupAction("action_confirmar_agendamento")
+        ]
+
+class ActionConfirmarAgendamento(Action):
     def name(self) -> Text:
-        return "action_submit_agendamento"
+        return "action_confirmar_agendamento"
 
     def run(
         self, 
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: DomainDict
-    ) -> List[Dict[Text, Any]]:
+    ) -> List[EventType]:
 
-        especialidade = tracker.get_slot("especialidade")
-        data_consulta = tracker.get_slot("data_consulta")
-        hora_consulta = tracker.get_slot("hora_consulta")
-        nome_medico = tracker.get_slot("nome_medico")
-        motivo_consulta = tracker.get_slot("motivo_consulta")
-        nome_paciente = tracker.get_slot("nome")
+        intent = tracker.latest_message.get['intent'].get('name').lower()
 
-        if especialidade is None or data_consulta is None or hora_consulta is None or nome_medico is None or nome_paciente is None:
-            dispatcher.utter_message(text="Desculpe, não consegui completar o agendamento. Por favor, verifique os dados informados.")
-            return []
-        
-        with DatabaseConnection() as db:
-            try:
-                # 1. Buscar id_medico
-                query_medico = "SELECT id_medico FROM medicos WHERE LOWER(nome) LIKE %s"
-                result_medico = db.execute_fetchone(query_medico, (f"%{nome_medico.lower()}%",))
-                if not result_medico:
-                    dispatcher.utter_message(text="Médico não encontrado.")
-                    return []
-                id_medico = result_medico["id_medico"]
+        if intent == "affirm":
+            especialidade = tracker.get_slot("especialidade")
+            data_consulta = dt.parse(tracker.get_slot("data_consulta")).strftime('%y-%m-%d') if tracker.get_slot("data_consulta") else None
+            hora_consulta = dt.parse((tracker.get_slot("hora_consulta")), settings={'TIMEZONE': 'UTC'}).strftime('%H:%M:00') if tracker.get_slot("hora_consulta") else None
+            nome_medico = tracker.get_slot("nome_medico")
+            motivo_consulta = tracker.get_slot("motivo_consulta")
+            nome_paciente = tracker.get_slot("nome")
 
-                # 2. Buscar id_data
-                query_data = "SELECT id_data FROM datas WHERE data = %s"
-                result_data = db.execute_fetchone(query_data, (data_consulta,))
-                if not result_data:
-                    dispatcher.utter_message(text="Data não disponível.")
-                    return []
-                id_data = result_data["id_data"]
-
-                # 3. Buscar id_horario
-                query_hora = "SELECT id_horario FROM horarios WHERE hora = %s"
-                result_hora = db.execute_fetchone(query_hora, (hora_consulta,))
-                if not result_hora:
-                    dispatcher.utter_message(text="Horário não disponível.")
-                    return []
-                id_horario = result_hora["id_horario"]
-
-                # 4. Buscar id_especialidade
-                query_especialidade = "SELECT id_especialidade FROM especialidades WHERE LOWER(nome) LIKE %s"
-                result_especialidade = db.execute_fetchone(query_especialidade, (especialidade.lower(),))
-                if not result_especialidade:
-                    dispatcher.utter_message(text="Especialidade não encontrada.")
-                    return []
-                id_especialidade = result_especialidade["id_especialidade"]
-
-                # 4. Inserir agendamento na tabela agenda
-                query_insert = """
-                    INSERT INTO agenda (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
-                    VALUES (%s, %s, %s, %s, %s)
-                """
-                params_insert = (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
-                
-                if not db.execute_write(query_insert, params_insert):
-                    dispatcher.utter_message(text="Erro ao registrar o agendamento no banco de dados.")
-                    return []
-
-            except Exception as e:
-                dispatcher.utter_message(text=f"Erro ao processar o agendamento: {e}")
+            if especialidade is None or data_consulta is None or hora_consulta is None or nome_medico is None or nome_paciente is None:
+                dispatcher.utter_message(text="Desculpe, não consegui completar o agendamento. Por favor, verifique os dados informados.")
                 return []
+        
+            with DatabaseConnection() as db:
+                try:
+                    # 1. Buscar id_medico
+                    query_medico = "SELECT id_medico FROM medicos WHERE LOWER(nome) LIKE %s"
+                    result_medico = db.execute_fetchone(query_medico, (f"%{nome_medico.lower()}%",))
+                    if not result_medico:
+                        dispatcher.utter_message(text="Médico não encontrado.")
+                        return []
+                    id_medico = result_medico["id_medico"]
 
-        dispatcher.utter_message(text=f"✅ Agendamento de {especialidade} com Dr(a). {nome_medico} em {data_consulta} às {hora_consulta} para {nome_paciente}) foi registrado com sucesso! Um e-mail/SMS de confirmação será enviado.")
+                    # 2. Buscar id_data
+                    query_data = "SELECT id_data FROM datas WHERE data = %s"
+                    result_data = db.execute_fetchone(query_data, (data_consulta,))
+                    if not result_data:
+                        dispatcher.utter_message(text="Data não disponível.")
+                        return []
+                    id_data = result_data["id_data"]
 
-        # Limpar os slots após o agendamento concluído
-        return [
-            SlotSet("especialidade", None),
-            SlotSet("data_consulta", None),
-            SlotSet("hora_consulta", None),
-            SlotSet("nome_medico", None),
-            SlotSet("motivo_consulta", None),
-            SlotSet("nome", None),
-            SlotSet("cadastro_pessoa_f", None),
-            SlotSet("requested_slot", None) # Importante para resetar o formulário
-        ]
+                    # 3. Buscar id_horario
+                    query_hora = "SELECT id_horario FROM horarios WHERE hora = %s"
+                    result_hora = db.execute_fetchone(query_hora, (hora_consulta,))
+                    if not result_hora:
+                        dispatcher.utter_message(text="Horário não disponível.")
+                        return []
+                    id_horario = result_hora["id_horario"]
+
+                    # 4. Buscar id_especialidade
+                    query_especialidade = "SELECT id_especialidade FROM especialidades WHERE LOWER(nome) LIKE %s"
+                    result_especialidade = db.execute_fetchone(query_especialidade, (especialidade.lower(),))
+                    if not result_especialidade:
+                        dispatcher.utter_message(text="Especialidade não encontrada.")
+                        return []
+                    id_especialidade = result_especialidade["id_especialidade"]
+
+                    # 4. Inserir agendamento na tabela agenda
+                    query_insert = """
+                        INSERT INTO agenda (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """
+                    params_insert = (id_data, id_horario, id_especialidade, id_medico, motivo_consulta, nome_paciente)
+                    
+                    if not db.execute_write(query_insert, params_insert):
+                        dispatcher.utter_message(text="Erro ao registrar o agendamento no banco de dados.")
+                        return []
+
+                except Exception as e:
+                    dispatcher.utter_message(text=f"Erro ao processar o agendamento: {e}")
+                    return []
+
+            dispatcher.utter_message(text=f"✅ Agendamento de {especialidade} com Dr(a). {nome_medico} em {data_consulta} às {hora_consulta} para {nome_paciente}) foi registrado com sucesso!")
+
+            # Limpar os slots após o agendamento concluído
+            return [
+                AllSlotsReset(), 
+                SlotSet("requested_slot", None)
+            ]
+        
+        if intent == "deny":
+            dispatcher.utter_message(
+                text="Ok, o agendamento foi cancelado. Se precisar de ajuda, estou aqui!"
+            )
+            # Limpa todos os slots relacionados ao agendamento e o requested_slot
+            return [
+                AllSlotsReset(), 
+                SlotSet("requested_slot", None)
+            ]
+        
+        else:
+            dispatcher.utter_message(
+                text="Desculpe, não entendi sua resposta. Por favor, responda com 'sim' para confirmar ou 'não' para cancelar o agendamento."
+            )
+            return []
+
 
 # --- Ação para Customizar as Perguntas dos Slots usando LLM (ou lógica simples) ---
 class ActionPerguntarSlotLLM(Action):
