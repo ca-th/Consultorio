@@ -1,8 +1,6 @@
 # requirements.txt
 
 # --- Core Rasa Libraries ---
-# Use ~= (operador de versão compatível) para permitir atualizações de correção (ex: 3.6.4),
-# mas não atualizações que possam quebrar a compatibilidade (ex: 3.7.0).
 rasa~=3.6.0
 rasa-sdk~=3.6.0
 

@@ -103,53 +103,37 @@ npm start
 # Configure as credenciais MySQL
 # Execute os scripts de SQL
 
-# Instalação do Rasa Pro
+# Instalação do Rasa 
 
 cd rasa
 
 # Crie um ambiente virtual
-python -m venv venv_py310
+python -m venv venv_py
 
 # Ative o ambiente virtual
-.\venv\Scripts\activate ou source venv_py310/Scripts/activate(recomendado)
+.\venv\Scripts\activate ou source venv_py/Scripts/activate(recomendado)
 
-# Instale o package manager do uv
-# macOS e Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Windows
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Instale o uv
-pip install uv
+#Instalação das Bibilotecas
+pip install rasa google-generativeai pytz regex 
 
 # Atualize o pip pra versão mais recente
 python -m pip install --upgrade pip
 
-# Instale o Rasa Pro
-uv pip install rasa-pro
+#Rodar o rasa
+python -m rasa train
 
-# Crie um ambiente virtual
-python -m venv venv
-
-# Ative a licença do Rasa Pro (O Hash está no arquivo .env na pasta rasa)
+# Ative a licença (vc tem que criar uma)
 # macOS e Linux
-export RASA_PRO_LICENSE=YOUR_LICENSE_KEY
+export GEMINI_PRO_LICENSE=YOUR_LICENSE_KEY
 
 # Windows
-set RASA_PRO_LICENSE=YOUR_LICENSE_KEY
-
-# Verifique a instalação
-rasa --version
-
-# Depois, em um terminal rode o comando
-rasa train
+set GEMINI_PRO_LICENSE=YOUR_LICENSE_KEY
 
 # Quando finalizar o treinamento, rode o comando:
 rasa shell (onde vai abrir o chat)
 
 # Por fim, abre outro terminal, entre na pasta rasa e ative o ambiente e rode o comando:
-rasa run actions
+rasa run actions (criar um ambiente separado: python -m venv .venv-core, source .venv-core/Scripts/activate,  python -m pip install --upgrade pip. ai roda o comando)
 
 ##IMPORTANTE: 
 
