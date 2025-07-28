@@ -1,27 +1,26 @@
-version: "3.1"
+#version: "3.1"
 
 intents:
   - greet
   - goodbye
   - affirm
   - deny
+  - stop
   - agendar_consulta
-  - inform_specialty
+  - inform_especialidade
   - inform_date
   - inform_time
-  - inform_doctor
-  - inform_name
-  - inform_reason
-  - afirma_rotina
-  - nega_rotina
-  - perguntar_ao_llm # Confirme se esta intent está aqui, ela está em suas regras
-  - ask_horario_geral # Confirme se estas intents de FAQ estão aqui
+  - inform_nome_medico
+  - inform_motivo_consulta
+  - inform_nome
+  - ask_horario_geral
   - ask_servicos
   - ask_horario_medico_especifico
   - ask_contato
   - ask_endereco
   - ask_telefone
   - ask_email
+  - perguntar_ao_llm
 
 entities:
   - especialidade
@@ -30,7 +29,6 @@ entities:
   - nome_medico
   - motivo_consulta
   - nome
-  - disponibilidade
 
 slots:
   especialidade:
@@ -38,132 +36,129 @@ slots:
     mappings:
       - type: from_entity
         entity: especialidade
-
   data_consulta:
     type: text
     mappings:
       - type: from_entity
         entity: data_consulta
-
   hora_consulta:
     type: text
     mappings:
       - type: from_entity
         entity: hora_consulta
-
   nome_medico:
     type: text
     mappings:
       - type: from_entity
         entity: nome_medico
-
   motivo_consulta:
     type: text
     mappings:
-      - type: from_entity
-        entity: motivo_consulta
-
+      - type: from_text
   nome:
     type: text
     mappings:
       - type: from_entity
         entity: nome
-
-  disponibilidade:
-    type: bool
-    initial_value: false
+  telefone:
+    type: text
     mappings:
-      - type: custom
+      - type: from_text
+  email:
+    type: text
+    mappings:
+      - type: from_text
+
+responses:
+  utter_greet:
+    - text: "Olá! Em que posso ajudar hoje?"
+  utter_goodbye:
+    - text: "Tchau! Até breve."
+  utter_ask_especialidade:
+    - text: "Qual especialidade médica você precisa?"
+  utter_ask_data_consulta:
+    - text: "Qual a data desejada para a consulta?"
+  utter_ask_hora_consulta:
+    - text: "Qual o horário da consulta?"
+  utter_ask_nome_medico:
+    - text: "Com qual médico você gostaria de agendar?"
+  utter_ask_motivo_consulta:
+    - text: "Qual o motivo da sua consulta? É um check-up de rotina ou você tem algum sintoma específico?"
+  utter_ask_nome:
+    - text: "Para finalizar, qual o seu nome completo, por favor?"
+  utter_ask_telefone:
+    - text: "Qual o seu número de telefone com DDD?"
+  utter_ask_email:
+    - text: "E qual o seu melhor e-mail para contato?"
+  utter_agendamento_finalizado:
+    - text: "Perfeito, {nome}! Seu agendamento foi pré-confirmado. Enviaremos todos os detalhes para o e-mail {email} e telefone {telefone}. Obrigado!"
+  utter_horario_geral:
+    - text: "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h."
+  utter_horario_medico_info:
+    - text: "Para saber o horário de um médico específico, por favor, me diga o nome dele."
+  utter_contato:
+    - text: "Você pode nos contatar pelo telefone (XX) XXXX-XXXX ou e-mail contato@clinica.com."
+  utter_endereco:
+    - text: "Estamos localizados na Rua Exemplo, 123, Bairro Centro, Cidade."
+  utter_telefone:
+    - text: "Nosso telefone é (XX) XXXX-XXXX."
+  utter_email:
+    - text: "Nosso e-mail é contato@clinica.com."
+  utter_iamabot:
+    - text: "Eu sou um assistente virtual, construído com Rasa."
+  utter_forms_deactivated:
+    - text: "Ok, o processo foi desativado."
+  utter_submit_agendamento_consulta_form:
+    - text: "Seu agendamento foi enviado com sucesso!"
 
 forms:
   agendamento_consulta_form:
     required_slots:
       - especialidade
       - data_consulta
-      - hora_consulta
-      - nome_medico
       - motivo_consulta
+      - nome_medico
+  dados_paciente_form:
+    required_slots:
       - nome
-      - disponibilidade
-
-responses:
-  utter_greet:
-    - text: "Olá! Em que posso ajudar hoje?"
-
-  utter_goodbye:
-    - text: "Tchau! Até breve."
-
-  utter_ask_especialidade:
-    - text: "Qual especialidade médica você precisa?"
-
-  utter_ask_data_consulta:
-    - text: "Qual a data desejada para a consulta?"
-
-  utter_ask_hora_consulta:
-    - text: "Qual o horário da consulta?"
-
-  utter_ask_nome_medico:
-    - text: "Há um médico de preferência?"
-
-  utter_ask_motivo_consulta:
-    - text: "Qual o motivo da consulta?"
-
-  utter_ask_nome:
-    - text: "Qual o seu nome completo?"
-
-  utter_ask_cadastro_pessoa_f:
-    - text: "Você já é cadastrado(a) na nossa clínica?"
-
-  utter_submit_agendamento_consulta_form:
-    - text: |
-        Confirmando:
-        Quero marcar uma consulta em {data_consulta} às {hora_consulta} com {nome_medico} ({especialidade}).
-        Motivo: {motivo_consulta}.
-        Nome do paciente: {nome}.
-        Cadastrado: {cadastro_pessoa_f}.
-        Posso confirmar?
-
-  utter_ask_affirm:
-    - text: "Certo! Posso confirmar o agendamento?"
-
-  utter_ask_deny:
-    - text: "Tudo bem! O agendamento foi cancelado."
-
-  # --- RESPOSTAS CORRIGIDAS/ADICIONADAS ---
-  utter_iamabot:
-    - text: "Eu sou um assistente virtual, não um humano."
-
-  utter_forms_deactivated:
-    - text: "Ok, o formulário foi desativado."
-
-  utter_horario_geral:
-    - text: "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h."
-
-  utter_horario_medico_info:
-    - text: "Para saber o horário de um médico específico, por favor, me diga o nome dele."
-
-  utter_contato:
-    - text: "Você pode nos contatar pelo telefone (XX) XXXX-XXXX ou e-mail contato@clinica.com."
-
-  utter_endereco:
-    - text: "Estamos localizados na Rua Exemplo, 123, Bairro Centro, Cidade."
-
-  utter_telefone:
-    - text: "Nosso telefone é (XX) XXXX-XXXX."
-
-  utter_email:
-    - text: "Nosso e-mail é contato@clinica.com."
-
-  # --- SE VOCÊ TIVER AÇÃO 'action_perguntar_llm', ELA PODE TER UMA UTTTER ANTES ---
-  # utter_ask_llm:
-  #   - text: "Certo, vou verificar isso com o LLM."
-
+      - telefone
+      - email
 
 actions:
-  - action_submit_agendamento
-  - action_agendar_consulta
+  # Ações customizadas
+  - action_ask_motivo_consulta
+  - action_ask_nome_medico
+  - action_ask_nome
+  - action_ask_telefone
+  - action_ask_email
+  - action_perguntar_ao_llm
+  - action_llm_fallback
+  - action_confirmar_agendamento
   - action_cancelar_agendamento
-  - action_perguntar_llm # Certifique-se que esta ação customizada está listada aqui
+  - validate_agendamento_consulta_form
+  - validate_dados_paciente_form
+
+  # Utterances usadas como ações
+  - utter_greet
+  - utter_goodbye
+  - utter_ask_especialidade
+  - utter_ask_data_consulta
+  - utter_ask_hora_consulta
+  - utter_ask_nome_medico
+  - utter_ask_motivo_consulta
+  - utter_ask_nome
+  - utter_ask_telefone
+  - utter_ask_email
+  - utter_agendamento_finalizado
+  - utter_horario_geral
+  - utter_horario_medico_info
+  - utter_contato
+  - utter_endereco
+  - utter_telefone
+  - utter_email
+  - utter_iamabot
+  - utter_forms_deactivated
+  - utter_submit_agendamento_consulta_form
 
 session_config:
   session_expiration_time: 60

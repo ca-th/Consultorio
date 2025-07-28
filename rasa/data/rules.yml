@@ -1,112 +1,97 @@
 version: "3.1"
 
 rules:
-  # --- Básico ---
-  - rule: Saudacao
-    steps:
-      - intent: greet
-      - action: utter_greet
 
-  - rule: Despedida
-    steps:
-      - intent: goodbye
-      - action: utter_goodbye
+# --- Regras principais do fluxo de agendamento ---
+- rule: Iniciar agendamento
+  steps:
+    - intent: agendar_consulta
+    - action: utter_ask_nome
 
-  - rule: Identidade do bot
-    steps:
-      - intent: bot_challenge
-      - action: utter_iamabot
+- rule: Receber nome do paciente
+  steps:
+    - intent: inform_nome
+    - action: utter_ask_especialidade
 
-  # --- Pergunta ao LLM (uso geral) ---
-  # Esta regra ativa a ação personalizada action_perguntar_llm
-  - rule: Pergunta ao LLM
-    steps:
-      - intent: perguntar_ao_llm
-      - action: action_perguntar_llm # Esta ação deve estar implementada em actions/actions.py
+- rule: Receber especialidade
+  steps:
+    - intent: inform_especialidade
+    - action: utter_ask_nome_medico
 
-  # --- Agendamento: ativar formulário ---
-  # Esta regra ativa o formulário 'agendamento_consulta_form'
-  - rule: Ativar agendamento consulta
-    steps:
-      - intent: agendar_consulta
-      - action: agendamento_consulta_form # Chama o formulário para preencher os slots
-      - active_loop: agendamento_consulta_form # Ativa o loop do formulário
+- rule: Receber nome do médico
+  steps:
+    - intent: inform_nome_medico
+    - action: utter_ask_data_consulta
 
-  # --- Agendamento: cancelar durante preenchimento do formulário ---
-  # Esta regra detecta intenções de parada/negação enquanto o formulário está ativo
-  - rule: Cancelar agendamento durante form
-    condition:
-      - active_loop: agendamento_consulta_form # A regra só se aplica se o formulário estiver ativo
-    steps:
-      - or:
-        - intent: stop # Se o usuário disser algo como "cancelar"
-        - intent: deny # Se o usuário disser "não" ou negar
-      - action: utter_forms_deactivated # Resposta que o formulário foi desativado
-      - active_loop: null # Desativa o loop do formulário (muito importante!)
-      # Opcional: Você pode chamar uma ação personalizada para limpar slots ou desfazer algo
-      # - action: action_cancelar_agendamento # Se você tiver uma ação para limpar slots, etc.
+- rule: Receber data da consulta
+  steps:
+    - intent: inform_date
+    - action: utter_ask_hora_consulta
 
-  # --- Agendamento: formulário preencheu todos os slots ---
-  # Esta regra é disparada quando o formulário 'agendamento_consulta_form' é concluído (todos os slots preenchidos).
-  # **** ESTA É A REGRA QUE FOI CORRIGIDA! ****
-  - rule: Resumo após form
-    condition:
-      - active_loop: agendamento_consulta_form # Verifica se o formulário estava ativo
-    steps:
-      # O formulário já foi concluído e seu método 'submit' em actions.py já foi chamado
-      # Não precisamos chamar 'action: agendamento_consulta_form' novamente aqui.
-      - active_loop: null # Desativa o loop do formulário (essencial)
-      - action: utter_submit_agendamento_consulta_form # Proferir a resposta de resumo
+- rule: Receber horário da consulta
+  steps:
+    - intent: inform_time
+    - action: utter_ask_motivo_consulta
 
-  # --- Confirmação do agendamento (após resumo) ---
-  # Esta regra processa a confirmação do usuário após o resumo do agendamento.
-  # Pode ser muito ampla se o 'affirm' for usado em outros contextos.
-  # Considere usar uma "story" mais específica ou um 'form_validation_action' para o slot de confirmação.
-  - rule: Confirmar agendamento
-    steps:
-      - intent: affirm # Se o usuário disser "sim" ou confirmar
-      - action: action_submit_agendamento # Ação para finalizar o agendamento
+- rule: Receber motivo da consulta
+  steps:
+    - intent: inform_motivo_consulta
+    - action: utter_agendamento_finalizado
 
-  # --- Não confirmar agendamento (após resumo) ---
-  # Esta regra processa a negação do usuário após o resumo do agendamento.
-  - rule: Nao confirmar agendamento
-    steps:
-      - intent: deny # Se o usuário disser "não"
-      - action: utter_forms_deactivated # Resposta de desativação
-      - active_loop: null # Desativa o loop (importante para evitar confusão)
+# --- Regras complementares para intents não usados diretamente ---
+- rule: Informar motivo da consulta
+  steps:
+    - intent: inform_motivo_consulta
+    - action: utter_ask_motivo_consulta
 
-  # --- FAQs (Perguntas Frequentes) ---
-  - rule: Mostrar horario geral
-    steps:
-      - intent: ask_horario_geral
-      - action: utter_horario_geral
+- rule: Informar nome
+  steps:
+    - intent: inform_nome
+    - action: utter_ask_nome
 
-  - rule: Usar LLM para serviços
-    steps:
-      - intent: ask_servicos
-      - action: action_perguntar_llm # Reusa a ação de perguntar ao LLM
+- rule: Informar nome do médico
+  steps:
+    - intent: inform_nome_medico
+    - action: utter_ask_nome_medico
 
-  - rule: Mostrar horario medico especifico
-    steps:
-      - intent: ask_horario_medico_especifico
-      - action: utter_horario_medico_info
+- rule: Informar horário da consulta
+  steps:
+    - intent: inform_time
+    - action: utter_ask_hora_consulta
 
-  - rule: Mostrar contato
-    steps:
-      - intent: ask_contato
-      - action: utter_contato
+# --- Regras para utterances não chamadas diretamente ---
+- rule: Perguntar especialidade
+  steps:
+    - intent: inform_especialidade
+    - action: utter_ask_especialidade
 
-  - rule: Mostrar endereco
-    steps:
-      - intent: ask_endereco
-      - action: utter_endereco
+- rule: Perguntar data da consulta
+  steps:
+    - intent: inform_date
+    - action: utter_ask_data_consulta
 
-  - rule: Mostrar telefone
-    steps:
-      - intent: ask_telefone
-      - action: utter_telefone
+- rule: Finalizar agendamento
+  steps:
+    - intent: affirm
+    - action: utter_agendamento_finalizado
 
-  - rule: Mostrar email
-    steps:
-      - intent: ask_email
-      - action: utter_email
+- rule: Identificar assistente virtual
+  steps:
+    - intent: affirm
+    - action: utter_iamabot
+
+- rule: Perguntar telefone
+  steps:
+    - intent: ask_telefone
+    - action: utter_ask_telefone
+
+- rule: Perguntar email
+  steps:
+    - intent: ask_email
+    - action: utter_ask_email
+
+# --- Regra para perguntas ao LLM ---
+- rule: Responder com LLM
+  steps:
+    - intent: perguntar_ao_llm
+    - action: action_llm_fallback
