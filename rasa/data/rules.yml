@@ -95,3 +95,5 @@ rules:
   steps:
     - intent: perguntar_ao_llm
     - action: action_llm_fallback
+
+    #certo

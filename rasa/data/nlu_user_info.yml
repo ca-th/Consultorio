@@ -146,6 +146,7 @@ nlu:
       - quais são os horários de vocês?
       - que horas abrem?
       - que horas fecham?
+      
 
   - intent: ask_servicos
     examples: |
@@ -195,3 +196,5 @@ nlu:
       - escreva uma poesia sobre gatos
       - qual a capital da França?
       # ... (e todos os seus outros exemplos)
+
+      #certo
