@@ -30,8 +30,7 @@ entities:
   - nome_medico
   - motivo_consulta
   - nome
-  - cadastro_pessoa_f
-  # - sintoma_texto # Se você usa esta entidade em algum NLU ou história, adicione-a aqui
+  - disponibilidade
 
 slots:
   especialidade:
@@ -70,11 +69,12 @@ slots:
       - type: from_entity
         entity: nome
 
-  cadastro_pessoa_f:
-    type: text
+  disponibilidade:
+    type: boolean
+    initial_value: false
     mappings:
       - type: from_entity
-        entity: cadastro_pessoa_f
+        entity: disponibilidade
 
 forms:
   agendamento_consulta_form:
@@ -85,7 +85,7 @@ forms:
       - nome_medico
       - motivo_consulta
       - nome
-      - cadastro_pessoa_f
+      - disponibilidade
 
 responses:
   utter_greet:

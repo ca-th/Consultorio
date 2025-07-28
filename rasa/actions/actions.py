@@ -1,6 +1,6 @@
 # actions/actions.py
 
-from typing import Any, Text, Dict, List, Union
+from typing import Any, Text, Dict, List, Union, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.types import DomainDict
@@ -19,18 +19,28 @@ import requests
 
 load_dotenv()  # Carrega as variáveis de ambiente do arquivo .env
 
-class DatabaseConnection(object):
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+class DatabaseConnection:
     def __init__(self):
         self.host = os.getenv("HOST")
         self.user = os.getenv("USER")
         self.password = os.getenv("PASSWORD")
         self.database = os.getenv("DATABASE")
-        self.connection = None
+        self.connection: Optional[pymysql.connections.Connection] = None
 
-    def connect(self):
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def connect(self) -> Optional[pymysql.connections.Connection]:
         if self.connection:
             return self.connection
-
         try:
             self.connection = pymysql.connect(
                 host=self.host,
@@ -41,62 +51,70 @@ class DatabaseConnection(object):
             )
             return self.connection
         except pymysql.MySQLError as e:
-            print(f"Erro ao conectar ao banco de dados: {e}")
+            logging.error(f"Erro ao conectar ao banco de dados: {e}")
             return None
-    
+
     def close(self):
         if self.connection:
             self.connection.close()
             self.connection = None
 
-    def execute_query(self, query: str, params: Union[tuple, dict] = None):
+    def execute_write(self, query: str, params: Union[tuple, dict] = ()) -> bool:
+        """
+        Executa comandos de escrita: INSERT, UPDATE, DELETE.
+        Retorna True se executado com sucesso, False se houve erro.
+        """
         connection = self.connect()
         if not connection:
-            return None
+            return False
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                result = cursor.fetchall()
+                cursor.execute(query, params)
                 connection.commit()
-                return result
+                return True
         except pymysql.MySQLError as e:
-            print(f"Erro ao executar a consulta: {e}")
-            return None
+            logging.error(f"Erro ao executar comando de escrita: {e}")
+            return False
         finally:
             self.close()
-     
-    def execute_fetchall(self, query: str, params: Union[tuple, dict] = None):
-        """Executa uma consulta e retorna todos os resultados."""
+
+    def execute_fetchall(self, query: str, params: Union[tuple, dict] = ()) -> Optional[List[Dict[str, Any]]]:
+        """
+        Executa SELECT e retorna todos os resultados como lista de dicionários.
+        """
         connection = self.connect()
         if not connection:
             return None
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
+                cursor.execute(query, params)
                 return cursor.fetchall()
         except pymysql.MySQLError as e:
-            print(f"Erro ao executar a consulta: {e}")
+            logging.error(f"Erro ao executar SELECT (fetchall): {e}")
             return None
         finally:
             self.close()
 
-    def execute_fetchone(self, query: str, params: Union[tuple, dict] = None):
-        """Executa uma consulta e retorna o primeiro resultado."""
+    def execute_fetchone(self, query: str, params: Union[tuple, dict] = ()) -> Optional[Dict[str, Any]]:
+        """
+        Executa SELECT e retorna o primeiro resultado como dicionário.
+        """
         connection = self.connect()
         if not connection:
             return None
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
+                cursor.execute(query, params)
                 return cursor.fetchone()
         except pymysql.MySQLError as e:
-            print(f"Erro ao executar a consulta: {e}")
+            logging.error(f"Erro ao executar SELECT (fetchone): {e}")
             return None
         finally:
             self.close()
+
 
 # --- Ação para perguntar ao LLM ---
 class ActionPerguntarLLM(Action):
@@ -157,28 +175,30 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
     ) -> Dict[Text, Any]:
         """Valida o slot 'especialidade'."""
 
-        db = DatabaseConnection()
-        conn = db.connect()
         especialidade = tracker.get_slot("especialidade")
 
-        if especialidade and conn:
+        if especialidade:
             try:
                 # Consulta as especialidades disponíveis no banco de dados
-                query = "SELECT * FROM especialidades WHERE especialidade = %s"
-                params = (especialidade.lower(),)  # Certifique-se de que o valor esteja em minúsculas
-                result = db.execute_query(query, params)
+                with DatabaseConnection() as db:
+                    query = "SELECT * FROM especialidades WHERE LOWER(nome) = %s"
+                    params = (especialidade.lower(),)  # Certifique-se de que o valor esteja em minúsculas
+                    result = db.execute_fetchone(query, params)
 
-                if result:
-                    return [SlotSet("especialidade", especialidade)]
-                else:
-                    dispatcher.utter_message(text="Desculpe, não encontramos essa especialidade. Por favor, tente novamente.")
-                    return [SlotSet("especialidade", None)]
+                    if result:
+                        return [SlotSet("especialidade", especialidade)]
+                    else:
+                        dispatcher.utter_message(text="Desculpe, não encontramos essa especialidade. Por favor, tente novamente.")
+                        return [SlotSet("especialidade", None)]
 
             except Exception as e:
-                dispatcher.utter_message(text=f"Erro ao consultar especialidades: {e}")
+                dispatcher.utter_message(
+                    text=f"Erro ao consultar especialidades: {e}"
+                )
                 return [SlotSet("especialidade", None)]
-            finally:
-                db.close()
+
+        # Caso o slot não tenha sido preenchido ainda
+        return [SlotSet("especialidade", None)]
 
     async def validate_data_consulta(
         self,
@@ -194,16 +214,13 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         if data:
             # Usa dateparser para reconhecer datas em linguagem natural
             parsed_date = dt.parse(data)
-            
             if parsed_date and parsed_date >= dt.datetime.now() - dt.timedelta(days=1):
-                db = DatabaseConnection()
-                conn = db.connect()
-                if conn:
+                with DatabaseConnection() as db:
                     try:
                         # Verifica se já existe agendamento disponível para essa data
                         query = "SELECT * FROM datas WHERE data = %s"
-                        params = (parsed_date.strftime('%Y-%m-%d'))
-                        result = db.execute_query(query, params)
+                        params = (parsed_date.strftime('%Y-%m-%d'),)
+                        result = db.execute_fetchone(query, params)
 
                         if result:
                             return [SlotSet("data_consulta", parsed_date.strftime('%Y-%m-%d'))]
@@ -211,13 +228,18 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
                             dispatcher.utter_message(text="Desculpe, não encontramos disponibilidade para essa data. Por favor, escolha outra.")
                             return [SlotSet("data_consulta", None)]
                     except Exception as e:
-                        dispatcher.utter_message(text=f"Erro ao consultar datas: {e}")
+                        dispatcher.utter_message(
+                            text=f"Erro ao consultar datas: {e}"
+                            )
                         return [SlotSet("data_consulta", None)]
-                    finally:
-                        db.close()
             else:
-                dispatcher.utter_message(text="Essa não parece ser uma data válida ou é uma data no passado. Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho').")
-                return {"data_consulta": None}
+                dispatcher.utter_message(
+                    text="Essa não parece ser uma data válida ou é uma data no passado. " \
+                    "Por favor, me diga o dia (ex: 'amanhã', 'quarta-feira', '25 de julho')."
+                    )
+                return [SlotSet("data_consulta", None)]
+        
+        return [SlotSet("data_consulta", None)]
 
     async def validate_hora_consulta(
         self,
@@ -232,26 +254,26 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         if hora:
             # Usa dateparser para reconhecer horários em linguagem natural
             parsed_time = dt.parse(hora, settings={'TIMEZONE': 'UTC'})
-            db = DatabaseConnection()
-            conn = db.connect()
+            if parsed_time:
+                with DatabaseConnection() as db:
+                    try:
+                        # Verifica se já existe agendamento disponível para essa hora
+                        query = "SELECT * FROM horarios WHERE hora = %s"
+                        params = (parsed_time.strftime('%H:%M'),)  # Formato de hora
+                        result = db.execute_fetchone(query, params)
 
-            if parsed_time and conn:
-                try:
-                    # Verifica se já existe agendamento disponível para essa hora
-                    query = "SELECT * FROM horarios WHERE hora = %s"
-                    params = (parsed_time.strftime('%H:%M'),)  # Formato de hora
-                    result = db.execute_query(query, params)
-
-                    if result:
-                        return [SlotSet("hora_consulta", parsed_time.strftime('%H:%M'))]
-                    else:
-                        dispatcher.utter_message(text="Desculpe, não tem disponibilidade para esse horário. Por favor, escolha outro.")
+                        if result:
+                            return [SlotSet("hora_consulta", parsed_time.strftime('%H:%M'))]
+                        else:
+                            dispatcher.utter_message(text="Desculpe, não tem disponibilidade para esse horário. Por favor, escolha outro.")
+                            return [SlotSet("hora_consulta", None)]
+                    except Exception as e:
+                        dispatcher.utter_message(
+                            text=f"Erro ao consultar horários: {e}"
+                            )
                         return [SlotSet("hora_consulta", None)]
-                except Exception as e:
-                    dispatcher.utter_message(text=f"Erro ao consultar horários: {e}")
-                    return [SlotSet("hora_consulta", None)]
-                finally:
-                    db.close()
+        
+        return [SlotSet("hora_consulta", None)]
 
     async def validate_nome_medico(
         self,
@@ -263,24 +285,27 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         """Valida o slot 'nome_medico'."""
 
         medico = tracker.get_slot("nome_medico")
-        db = DatabaseConnection()
-        conn = db.connect()
 
-        if medico and conn:
-            try:
-                query = "SELECT * FROM medicos WHERE nome LIKE %s"
-                params = (f"%{medico.lower()}%",)  # Busca por nome similar
-                result = db.execute_query(query, params)
+        if medico:
+            with DatabaseConnection() as db:
+                try:
+                    query = "SELECT * FROM medicos WHERE LOWER(nome) LIKE %s"
+                    params = (f"%{medico.lower()}%",)  # Busca por nome similar
+                    result = db.execute_fetchone(query, params)
 
-                if result:
-                    return [SlotSet("nome_medico", result[0]['nome'])]  # Retorna o primeiro médico encontrado
-                else:
-                    dispatcher.utter_message(text="Desculpe, não encontramos esse médico. Por favor, tente novamente.")
+                    if result:
+                        return [SlotSet("nome_medico", result["nome"])] # Retorna o primeiro médico encontrado
+                    else:
+                        dispatcher.utter_message(text="Desculpe, não encontramos esse médico. Por favor, tente novamente.")
+                        return [SlotSet("nome_medico", None)]
+
+                except Exception as e:
+                    dispatcher.utter_message(
+                        text=f"Erro ao consultar médicos: {e}"
+                        )
                     return [SlotSet("nome_medico", None)]
-
-            except Exception as e:
-                dispatcher.utter_message(text=f"Erro ao consultar médicos: {e}")
-                return [SlotSet("nome_medico", None)]
+        
+        return [SlotSet("nome_medico", None)]
                    
     async def validate_motivo_consulta(
         self,
@@ -293,10 +318,15 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         motivo_consulta = tracker.get_slot("motivo_consulta")
 
         if motivo_consulta and len(motivo_consulta) > 5 and len(motivo_consulta) < 255:
-            dispatcher.utter_message(text="Motivo registrado.")
+            dispatcher.utter_message(
+                text="Motivo registrado."
+                )
             return [SlotSet("motivo_consulta", motivo_consulta)]
         else:
-            dispatcher.utter_message(text="Por favor, descreva o motivo novamente (mínimo de 5 caracteres e máximo de 255).")
+            dispatcher.utter_message(
+                text="Por favor, descreva o motivo novamente "
+                "(mínimo de 5 caracteres e máximo de 255)."
+                )
             return [SlotSet("motivo_consulta", None)]
 
     async def validate_nome(
@@ -310,11 +340,91 @@ class ValidateAgendamentoConsultaForm(FormValidationAction):
         nome_paciente = tracker.get_slot("nome")
         
         if nome_paciente and len(nome_paciente) >= 3 and len(nome_paciente) <= 100:
-            dispatcher.utter_message("Nome registrado com sucesso!")
+            dispatcher.utter_message(
+                text="Nome registrado com sucesso!"
+                )
             return [SlotSet("nome", nome_paciente)]
         else:
-            dispatcher.utter_message(text="Por favor, informe seu nome novamente.")
+            dispatcher.utter_message(
+                text="Por favor, informe seu nome novamente."
+                )
             return [SlotSet("nome", None)]
+    
+    async def validate_disponibilidade(
+        self,
+        slot_value: Any,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict,
+    ) -> Dict[Text, Any]:
+        """Valida a disponibilidade de agendamento na agenda do médico."""
+
+        especialidade = tracker.get_slot("especialidade")
+        data_str = tracker.get_slot("data_consulta")
+        hora_str = tracker.get_slot("hora_consulta")
+        nome_medico = tracker.get_slot("nome_medico")
+
+        if especialidade and data_str and hora_str and nome_medico:
+            try:
+                data_consulta = dt.parse(data_str)
+                hora_consulta = dt.parse(hora_str, settings={'TIMEZONE': 'UTC'})
+            except Exception as e:
+                dispatcher.utter_message(text="Data ou hora inválida.")
+                return [SlotSet("disponibilidade", False)]
+
+            with DatabaseConnection() as db:
+                try:
+                    # 1. Buscar id_medico
+                    query_medico = "SELECT id_medico FROM medicos WHERE LOWER(nome) LIKE %s"
+                    result_medico = db.execute_fetchone(query_medico, (f"%{nome_medico.lower()}%",))
+                    if not result_medico:
+                        dispatcher.utter_message(text="Médico não encontrado.")
+                        return [SlotSet("disponibilidade", False)]
+                    id_medico = result_medico["id_medico"]
+
+                    # 2. Buscar id_data
+                    query_data = "SELECT id_data FROM datas WHERE data = %s"
+                    result_data = db.execute_fetchone(query_data, (data_consulta.strftime('%Y-%m-%d'),))
+                    if not result_data:
+                        dispatcher.utter_message(text="Data não disponível.")
+                        return [SlotSet("disponibilidade", False)]
+                    id_data = result_data["id_data"]
+
+                    # 3. Buscar id_horario
+                    query_hora = "SELECT id_horario FROM horarios WHERE hora = %s"
+                    result_hora = db.execute_fetchone(query_hora, (hora_consulta.strftime('%H:%M'),))
+                    if not result_hora:
+                        dispatcher.utter_message(text="Horário não disponível.")
+                        return [SlotSet("disponibilidade", False)]
+                    id_horario = result_hora["id_horario"]
+
+                    # 4. Verificar disponibilidade na agenda
+                    query_agenda = """
+                        SELECT disponivel FROM agenda
+                        WHERE id_medico = %s AND id_data = %s AND id_horario = %s
+                    """
+                    params = (id_medico, id_data, id_horario)
+                    result = db.execute_fetchone(query_agenda, params)
+
+                    if result and result["disponivel"]:
+                        dispatcher.utter_message(
+                            text=f"Disponibilidade confirmada para {especialidade} com Dr(a). {nome_medico} em {data_str} às {hora_str}."
+                        )
+                        return [SlotSet("disponibilidade", True)]
+                    else:
+                        dispatcher.utter_message(
+                            text="Desculpe, o médico já tem um agendamento nesse horário. Por favor, escolha outro horário ou data."
+                        )
+                        return [SlotSet("disponibilidade", False)]
+
+                except Exception as e:
+                    dispatcher.utter_message(text=f"Erro ao verificar disponibilidade: {e}")
+                    return [SlotSet("disponibilidade", False)]
+
+        dispatcher.utter_message(
+            text="Não foi possível confirmar a disponibilidade. Por favor, verifique os dados informados."
+        )
+        return [SlotSet("disponibilidade", False)]
 
 
 # --- Ação para submeter o agendamento (após confirmação do resumo) ---
@@ -322,22 +432,66 @@ class ActionSubmitAgendamento(Action):
     def name(self) -> Text:
         return "action_submit_agendamento"
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: DomainDict) -> List[Dict[Text, Any]]:
+    def run(
+        self, 
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
 
-        # Recuperar os valores dos slots
         especialidade = tracker.get_slot("especialidade")
         data_consulta = tracker.get_slot("data_consulta")
         hora_consulta = tracker.get_slot("hora_consulta")
         nome_medico = tracker.get_slot("nome_medico")
         motivo_consulta = tracker.get_slot("motivo_consulta")
         nome_paciente = tracker.get_slot("nome")
-        cadastro = tracker.get_slot("cadastro_pessoa_f")
 
-        # --- Lógica para FINALIZAR o agendamento real ---
-        # Aqui você faria a integração com seu sistema de agendamento (API, BD, etc.)
-        dispatcher.utter_message(text=f"✅ Agendamento de {especialidade} com Dr(a). {nome_medico} em {data_consulta} às {hora_consulta} para {nome_paciente} (CPF: {cadastro}) foi registrado com sucesso! Um e-mail/SMS de confirmação será enviado.")
+        if especialidade is None or data_consulta is None or hora_consulta is None or nome_medico is None or nome_paciente is None:
+            dispatcher.utter_message(text="Desculpe, não consegui completar o agendamento. Por favor, verifique os dados informados.")
+            return []
+        
+        with DatabaseConnection() as db:
+            try:
+                # 1. Buscar id_medico
+                query_medico = "SELECT id_medico FROM medicos WHERE LOWER(nome) LIKE %s"
+                result_medico = db.execute_fetchone(query_medico, (f"%{nome_medico.lower()}%",))
+                if not result_medico:
+                    dispatcher.utter_message(text="Médico não encontrado.")
+                    return []
+                id_medico = result_medico["id_medico"]
+
+                # 2. Buscar id_data
+                query_data = "SELECT id_data FROM datas WHERE data = %s"
+                result_data = db.execute_fetchone(query_data, (data_consulta,))
+                if not result_data:
+                    dispatcher.utter_message(text="Data não disponível.")
+                    return []
+                id_data = result_data["id_data"]
+
+                # 3. Buscar id_horario
+                query_hora = "SELECT id_horario FROM horarios WHERE hora = %s"
+                result_hora = db.execute_fetchone(query_hora, (hora_consulta,))
+                if not result_hora:
+                    dispatcher.utter_message(text="Horário não disponível.")
+                    return []
+                id_horario = result_hora["id_horario"]
+
+                # 4. Inserir agendamento na tabela agenda
+                query_insert = """
+                    INSERT INTO agenda (id_medico, id_data, id_horario, motivo_consulta, nome_paciente)
+                    VALUES (%s, %s, %s, %s, %s)
+                """
+                params_insert = (id_medico, id_data, id_horario, motivo_consulta, nome_paciente)
+                
+                if not db.execute_write(query_insert, params_insert):
+                    dispatcher.utter_message(text="Erro ao registrar o agendamento no banco de dados.")
+                    return []
+
+            except Exception as e:
+                dispatcher.utter_message(text=f"Erro ao processar o agendamento: {e}")
+                return []
+
+        dispatcher.utter_message(text=f"✅ Agendamento de {especialidade} com Dr(a). {nome_medico} em {data_consulta} às {hora_consulta} para {nome_paciente}) foi registrado com sucesso! Um e-mail/SMS de confirmação será enviado.")
 
         # Limpar os slots após o agendamento concluído
         return [
@@ -354,11 +508,14 @@ class ActionSubmitAgendamento(Action):
 # --- Ação para Customizar as Perguntas dos Slots usando LLM (ou lógica simples) ---
 class ActionPerguntarSlotLLM(Action):
     def name(self) -> Text:
-        return "action_perguntar_slot_llm"
+        return "agendamento_consulta_form"
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: DomainDict) -> List[Dict[Text, Any]]:
+    def run(
+        self, 
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict
+    ) -> List[Dict[Text, Any]]:
 
         current_slot = tracker.get_slot("requested_slot")
         # TODO: Integrar sua lógica de LLM aqui para gerar a pergunta dinâmica.
@@ -378,8 +535,6 @@ class ActionPerguntarSlotLLM(Action):
             pergunta_customizada = "Poderia me dar um breve resumo do motivo da sua consulta? Isso nos ajuda a direcioná-lo melhor."
         elif current_slot == "nome":
             pergunta_customizada = "Por favor, para finalizar o agendamento, qual é o seu nome completo?"
-        elif current_slot == "cadastro_pessoa_f":
-            pergunta_customizada = "Para o registro, qual o seu CPF? (Apenas números ou com pontos e hífen)"
         else:
             # Fallback: se não for um dos slots customizados, usa a resposta padrão do domain.yml
             dispatcher.utter_message(response=f"utter_ask_{current_slot}")
