@@ -1,0 +1,67 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - oi
+    - olá
+    - bom dia
+    - boa tarde
+    - boa noite
+    - hey
+    - e aí
+
+- intent: inform_symptoms
+  examples: |
+    - estou com [dor de cabeça](symptom)
+    - sinto [febre](symptom) e [dor no corpo](symptom)
+    - tenho [tosse](symptom) há dias
+    - estou com [dor no peito](symptom)
+    - sinto [falta de ar](symptom)
+    - tenho [dor nas costas](symptom)
+    - estou com [náusea](symptom) e [vômito](symptom)
+    - sinto [dor abdominal](symptom)
+    - tenho [diarreia](symptom)
+    - estou com [insônia](symptom)
+
+- intent: schedule_appointment
+  examples: |
+    - quero agendar uma consulta
+    - gostaria de marcar um horário
+    - preciso de uma consulta
+    - quero marcar com um médico
+    - preciso agendar
+
+- intent: provide_personal_info
+  examples: |
+    - meu nome é [João Silva](name)
+    - sou [Maria Santos](name)
+    - meu telefone é [(11) 99999-9999](phone)
+    - telefone [(21) 88888-8888](phone)
+    - cpf [123.456.789-00](cpf)
+    - meu cpf é [987.654.321-11](cpf)
+
+- intent: affirm
+  examples: |
+    - sim
+    - claro
+    - correto
+    - exato
+    - isso mesmo
+    - perfeito
+
+- intent: deny
+  examples: |
+    - não
+    - negativo
+    - não é isso
+    - errado
+    - não está certo
+
+- intent: goodbye
+  examples: |
+    - tchau
+    - até logo
+    - obrigado
+    - valeu
+    - bye

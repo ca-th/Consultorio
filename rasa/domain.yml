@@ -1,0 +1,114 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - inform
+  - inform_symptoms
+  - schedule_appointment
+  - provide_personal_info
+  - check_availability
+  - cancel_appointment
+  - ask_specialties
+
+entities:
+  - symptom
+  - specialty
+  - date
+  - time
+  - name
+  - phone
+  - cpf
+
+slots:
+  symptoms:
+    type: list
+    mappings:
+    - type: from_entity
+      entity: symptom
+  specialty:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: specialty
+  symptoms_urgency:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: custom
+  symptoms_explanation:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: custom
+  appointment_date:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: date
+  appointment_time:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: time
+  patient_name:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: name
+  patient_phone:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: phone
+  patient_cpf:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: cpf
+  recommended_specialty:
+    type: text
+    mappings:
+    - type: custom
+
+responses:
+  utter_greet:
+  - text: "Olá! Sou seu assistente para agendamento de consultas. Como posso ajudá-lo hoje?"
+
+  utter_ask_symptoms:
+  - text: "Pode me descrever os sintomas que você está sentindo?"
+
+  utter_ask_personal_info:
+  - text: "Para continuar com o agendamento, preciso de algumas informações:\n- Nome completo\n- Telefone\n- CPF"
+
+  utter_ask_preferred_date:
+  - text: "Que data você gostaria para sua consulta? (formato: DD/MM/AAAA)"
+
+  utter_ask_preferred_time:
+  - text: "Que horário você prefere? (formato: HH:MM)"
+
+  utter_goodbye:
+  - text: "Obrigado por usar nosso serviço! Tenha um ótimo dia!"
+
+actions:
+  - action_analyze_symptoms
+  - action_recommend_specialty
+  - action_check_availability
+  - action_schedule_appointment
+  - action_confirm_appointment
+  - validate_appointment_form
+
+forms:
+  appointment_form:
+    required_slots:
+      - patient_name
+      - patient_phone
+      - patient_cpf
+      - appointment_date
+      - appointment_time
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

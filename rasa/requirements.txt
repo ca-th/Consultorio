@@ -1,0 +1,5 @@
+rasa==3.6.20
+google-generativeai==0.3.2
+requests==2.31.0
+python-dateutil==2.8.2
+spacy==3.6.1
