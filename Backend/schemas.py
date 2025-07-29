@@ -1,107 +1,30 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-
-class UsuarioBase(BaseModel):
+class Usuario(BaseModel):
     nome: str
     cpf: str
     telefone: str
 
-class UsuarioCreate(UsuarioBase):
-    pass
-
-class Usuario(UsuarioBase):
-    id_usuario: int
-    class Config:
-        from_attributes = True
-
-class EspecialidadeBase(BaseModel):
+class Medico(BaseModel):
     nome: str
+    especialidade: str
 
-class EspecialidadeCreate(EspecialidadeBase):
-    pass
-
-class Especialidade(EspecialidadeBase):
-    id_especialidade: int
-    class Config:
-        from_attributes = True
-
-class MedicoBase(BaseModel):
-    nome: str
-    id_especialidade: int
-
-class MedicoCreate(MedicoBase):
-    pass
-
-class Medico(MedicoBase):
-    id_medico: int
-    class Config:
-        from_attributes = True
-
-class HorarioBase(BaseModel):
+class Horario(BaseModel):
     data_hora: datetime
 
-class HorarioCreate(HorarioBase):
-    pass
+class Consulta(BaseModel):
+    especialidade: str
+    medico: str
 
-class Horario(HorarioBase):
-    id_horario: int
-    class Config:
-        from_attributes = True
+class Agendamento(BaseModel):
+    horario: datetime
+    medico: str
+    usuario: str
 
-class ConsultaBase(BaseModel):
-    id_especialidade: int
-    id_medico: int
-
-class ConsultaCreate(ConsultaBase):
-    pass
-
-class Consulta(ConsultaBase):
-    id_consulta: int
-    class Config:
-        from_attributes = True
-
-class AgendamentoBase(BaseModel):
-    id_horario: int
-    id_medico: int
-    id_usuario: int
-
-class AgendamentoCreate(AgendamentoBase):
-    pass
-
-class Agendamento(AgendamentoBase):
-    id_agendamento: int
-    class Config:
-        from_attributes = True
-
-class VerificacaoBase(BaseModel):
-    id_horario: int
-    id_consulta: int
-    id_agendamento: int
-    id_usuario: int
-
-class VerificacaoCreate(VerificacaoBase):
-    pass
-
-class Verificacao(VerificacaoBase):
-    id_verificacao: int
-    class Config:
-        from_attributes = True
 
 class ChatMessage(BaseModel):
     message: str
 
 class ChatResponse(BaseModel):
     response: str
-
-class ContactForm(BaseModel):
-    nome: str
-    email: str
-    assunto: str = None
-    mensagem: str
-
-class ContactMessage(ContactForm):
-    id: int
-    data_envio: datetime
-    class Config:
-        from_attributes = True
