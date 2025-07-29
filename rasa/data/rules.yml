@@ -1,0 +1,36 @@
+version: "3.1"
+
+rules:
+- rule: Cumprimentar sempre
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- rule: Despedir sempre
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Analisar sintomas
+  steps:
+  - intent: inform_symptoms
+  - action: action_analyze_symptoms
+  - action: action_recommend_specialty
+
+- rule: Ativar formulário de agendamento
+  condition:
+  - active_loop: null
+  steps:
+  - intent: schedule_appointment
+  - action: appointment_form
+  - active_loop: appointment_form
+
+- rule: Finalizar formulário
+  condition:
+  - active_loop: appointment_form
+  steps:
+  - action: appointment_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: action_schedule_appointment

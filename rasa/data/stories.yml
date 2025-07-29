@@ -1,50 +1,28 @@
 version: "3.1"
 
 stories:
-- story: agendamento completo
+- story: cumprimento simples
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- story: agendamento direto
   steps:
   - intent: greet
   - action: utter_greet
   - intent: schedule_appointment
-  - action: utter_ask_symptoms
+  - action: appointment_form
+  - active_loop: appointment_form
+
+- story: sintomas primeiro
+  steps:
+  - intent: greet
+  - action: utter_greet
   - intent: inform_symptoms
   - action: action_analyze_symptoms
   - action: action_recommend_specialty
-  - action: appointment_form
-  - active_loop: appointment_form
-  - slot_was_set:
-    - requested_slot: patient_name
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_name: João Silva
-  - slot_was_set:
-    - requested_slot: patient_phone
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_phone: (11) 99999-9999
-  - slot_was_set:
-    - requested_slot: patient_cpf
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_cpf: 123.456.789-00
-  - slot_was_set:
-    - requested_slot: appointment_date
-  - intent: inform
-  - slot_was_set:
-    - appointment_date: 15/12/2024
-  - slot_was_set:
-    - requested_slot: appointment_time
-  - intent: inform
-  - slot_was_set:
-    - appointment_time: 14:00
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - action: action_schedule_appointment
-  - intent: goodbye
-  - action: utter_goodbye
 
-- story: apenas sintomas
+- story: confirma especialidade e agenda
   steps:
   - intent: greet
   - action: utter_greet
@@ -52,4 +30,10 @@ stories:
   - action: action_analyze_symptoms
   - action: action_recommend_specialty
   - intent: affirm
-  - action: utter_ask_personal_info
+  - action: appointment_form
+  - active_loop: appointment_form
+
+- story: despedida
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye

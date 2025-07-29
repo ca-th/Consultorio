@@ -25,11 +25,13 @@ entities:
 slots:
   symptoms:
     type: list
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: symptom
   specialty:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: specialty
@@ -45,31 +47,37 @@ slots:
     - type: custom
   appointment_date:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: date
   appointment_time:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: time
   patient_name:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: name
   patient_phone:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: phone
   patient_cpf:
     type: text
+    influence_conversation: true
     mappings:
     - type: from_entity
       entity: cpf
   recommended_specialty:
     type: text
+    influence_conversation: true
     mappings:
     - type: custom
 
@@ -81,7 +89,7 @@ responses:
   - text: "Pode me descrever os sintomas que você está sentindo?"
 
   utter_ask_personal_info:
-  - text: "Para continuar com o agendamento, preciso de algumas informações:\n- Nome completo\n- Telefone\n- CPF"
+  - text: "Para continuar com o agendamento, preciso de algumas informações:\\n- Nome completo\\n- Telefone\\n- CPF"
 
   utter_ask_preferred_date:
   - text: "Que data você gostaria para sua consulta? (formato: DD/MM/AAAA)"
@@ -91,6 +99,26 @@ responses:
 
   utter_goodbye:
   - text: "Obrigado por usar nosso serviço! Tenha um ótimo dia!"
+
+  # Respostas do formulário (ESSENCIAIS)
+  utter_ask_patient_name:
+  - text: "Qual é o seu nome completo?"
+
+  utter_ask_patient_phone:
+  - text: "Qual é o seu número de telefone?"
+
+  utter_ask_patient_cpf:
+  - text: "Qual é o seu CPF?"
+
+  utter_ask_appointment_date:
+  - text: "Em que data você gostaria de agendar? (DD/MM/AAAA)"
+
+  utter_ask_appointment_time:
+  - text: "Que horário você prefere? (HH:MM)"
+
+  # Respostas de erro
+  utter_default:
+  - text: "Desculpe, não entendi. Pode repetir?"
 
 actions:
   - action_analyze_symptoms
