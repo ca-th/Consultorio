@@ -8,11 +8,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 import re
 import logging
-import json
 import dateparser as dt
-
-import phonenumbers
-from phonenumbers import geocoder, carrier
 
 from .gemini_integration import GeminiIntegration
 

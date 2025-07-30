@@ -1,7 +1,6 @@
 import google.generativeai as genai
 import os
 from typing import List, Dict, Any
-import json
 import logging
 import re
 

@@ -54,14 +54,22 @@ slots:
     mappings:
     - type: from_entity
       entity: appointment_date
+    - type: from_text
       intent: provide_appointment_date
+      conditions:
+      - active_loop: appointment_form
+        requested_slot: appointment_date
   appointment_time:
     type: text
     influence_conversation: true
     mappings:
     - type: from_entity
       entity: appointment_time
+    - type: from_text
       intent: provide_appointment_time
+      conditions:
+      - active_loop: appointment_form
+        requested_slot: appointment_time
   patient_name:
     type: text
     influence_conversation: true
