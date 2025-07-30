@@ -1,24 +1,23 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import requests
-from schemas import ChatMessage, ChatResponse # importa os modelos diretamente
+from schemas import ChatMessage, ChatResponse 
 
 app = FastAPI()
 
-# 🔓 Permitir acesso do frontend
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ou especifique ["http://localhost:3000"]
+    allow_origins=["*"],  
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🏁 Endpoint inicial
+# ver se ta rodando
 @app.get("/")
 def root():
     return {"message": "API rodando! Acesse /chat para conversar com a IA."}
 
-# 🤖 Endpoint de conversa com Rasa
 RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
 
 @app.post("/chat", response_model=ChatResponse)
