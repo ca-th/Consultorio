@@ -10,6 +10,9 @@ nlu:
     - boa noite
     - hey
     - e aí
+    - oie 
+    - beleza
+    - eae 
 
 - intent: inform_symptoms
   examples: |
@@ -32,14 +35,14 @@ nlu:
     - quero marcar com um médico
     - preciso agendar
 
-- intent: provide_personal_info
-  examples: |
-    - meu nome é [João Silva](name)
-    - sou [Maria Santos](name)
-    - meu telefone é [(11) 99999-9999](phone)
-    - telefone [(21) 88888-8888](phone)
-    - cpf [123.456.789-00](cpf)
-    - meu cpf é [987.654.321-11](cpf)
+# - intent: provide_personal_info
+#   examples: |
+#     - meu nome é [João Silva](name)
+#     - sou [Maria Santos](name)
+#     - meu telefone é [(11) 99999-9999](phone)
+#     - telefone [(21) 88888-8888](phone)
+#     - cpf [123.456.789-00](cpf)
+#     - meu cpf é [987.654.321-11](cpf)
 
 - intent: affirm
   examples: |
@@ -49,6 +52,8 @@ nlu:
     - exato
     - isso mesmo
     - perfeito
+    - sim, isso mesmo
+
 
 - intent: deny
   examples: |
@@ -65,3 +70,24 @@ nlu:
     - obrigado
     - valeu
     - bye
+
+- intent: deny_symptoms
+  examples: |
+    - é só uma consulta de rotina
+    - não estou com sintomas
+    - quero fazer um check-up
+    - não tenho sintomas
+    - é apenas uma consulta de rotina
+    - não, não estou com sintomas
+    - não tenho sintomas agora
+    - não, não estou
+    - não, não tenho
+
+- intent: deny_appointment
+  examples: |
+    - não quero agendar
+    - não preciso de consulta
+    - não quero marcar horário
+    - não estou interessado em agendar
+    - não, obrigado
+    - não, obrigada

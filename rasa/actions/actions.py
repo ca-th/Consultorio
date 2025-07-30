@@ -7,6 +7,10 @@ from rasa_sdk.events import SlotSet
 from datetime import datetime, timedelta
 import re
 import logging
+import json
+
+import phonenumbers
+from phonenumbers import geocoder, carrier
 
 from .gemini_integration import GeminiIntegration
 
@@ -21,7 +25,12 @@ class ActionAnalyzeSymptoms(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
         symptoms = tracker.get_slot("symptoms") or []
+        
         logger.info(f"Analisando sintomas: {symptoms}")
+
+        if not symptoms:
+            entities = tracker.latest_message.get("entities", [])
+            symptoms = [e.get("value") for e in entities if e.get("entity") == "symptom"]
         
         # Validação inicial
         if not symptoms:
@@ -116,44 +125,39 @@ class ValidateAppointmentForm(FormValidationAction):
             dispatcher.utter_message(text="Por favor, informe um nome válido.")
             return {"patient_name": None}
 
-    def validate_patient_phone(
+    def validate_patient_email(
         self,
         slot_value: Any,
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: DomainDict,
     ) -> Dict[Text, Any]:
-        
-        if slot_value:
-            # Remove formatação e verifica se tem pelo menos 10 dígitos
-            # phone_digits = re.sub(r'\D', '', slot_value)
-            # if len(phone_digits) >= 10:
-            #     return {"patient_phone": slot_value}
-            # Expressão regular para validar telefone com DDD, exemplo: (11) 99999-9999
-            phone_pattern = r"\(\d{2}\)\s?\d{4,5}-\d{4}"
 
-            if re.fullmatch(phone_pattern, slot_value):
-                return {"patient_phone": slot_value}
-            
-        dispatcher.utter_message(text="Por favor, informe um telefone válido (ex: (11) 99999-9999).")
-        return {"patient_phone": None}
+        # Expressão regular simples para validar e-mail
+        email_pattern = r"[^@]+@[^@]+\.[^@]+"
 
-    def validate_patient_cpf(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
+        if slot_value and re.match(email_pattern, slot_value):
+            return {"patient_email": slot_value}
         
-        if slot_value:
+        dispatcher.utter_message(text="Por favor, informe um e-mail válido (ex: nome@exemplo.com).")
+        return {"patient_email": None}
+
+    #def validate_patient_cpf(
+       # self,
+       # slot_value: Any,
+       # dispatcher: CollectingDispatcher,
+       # tracker: Tracker,
+       # domain: DomainDict,
+    #) -> Dict[Text, Any]:
+        
+       # if slot_value:
             # Remove formatação
-            cpf_digits = re.sub(r'\D', '', slot_value)
-            if len(cpf_digits) == 11:
-                return {"patient_cpf": slot_value}
+           # cpf_digits = re.sub(r'\D', '', slot_value)
+           # if len(cpf_digits) == 11:
+             #   return {"patient_cpf": slot_value}
         
-        dispatcher.utter_message(text="Por favor, informe um CPF válido (ex: 123.456.789-00).")
-        return {"patient_cpf": None}
+       # dispatcher.utter_message(text="Por favor, informe um CPF válido (ex: 123.456.789-00).")
+       # return {"patient_cpf": None}
 
     def validate_appointment_date(
         self,
@@ -204,6 +208,25 @@ class ValidateAppointmentForm(FormValidationAction):
                 return {"appointment_time": None}
         
         return {"appointment_time": None}
+
+# class ActionSetHasSymptoms(Action):
+#     def name(self) -> str:
+#         return "action_set_has_symptoms"
+
+#     def run(self, dispatcher: CollectingDispatcher,
+#             tracker: Tracker,
+#             domain: dict):
+
+#         # Pega a última intent detectada
+#         last_intent = tracker.get_intent_of_latest_message()
+
+#         # Define o valor do slot com base na intent
+#         if last_intent == "inform_symptoms":
+#             return [SlotSet("has_symptoms", True)]
+#         elif last_intent == "deny_symptoms":
+#             return [SlotSet("has_symptoms", False)]
+#         else:
+#             return []
 
 class ActionRecommendSpecialty(Action):
     def name(self) -> Text:

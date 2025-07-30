@@ -5,13 +5,15 @@ intents:
   - goodbye
   - affirm
   - deny
-  - inform
+  #- inform
   - inform_symptoms
+  - deny_symptoms
   - schedule_appointment
-  - provide_personal_info
-  - check_availability
-  - cancel_appointment
-  - ask_specialties
+  - deny_appointment
+  #- provide_personal_info
+  #- check_availability
+  #- cancel_appointment
+  #- ask_specialties
 
 entities:
   - symptom
@@ -19,10 +21,14 @@ entities:
   - date
   - time
   - name
-  - phone
-  - cpf
+  - email
 
 slots:
+  # has_symptoms:
+  #   type: bool
+  #   influence_conversation: true
+  #   mappings:
+  #     - type: custom
   symptoms:
     type: list
     influence_conversation: true
@@ -63,18 +69,24 @@ slots:
     mappings:
     - type: from_entity
       entity: name
-  patient_phone:
+  # patient_phone:
+  #   type: text
+  #   influence_conversation: true
+  #   mappings:
+  #   - type: from_entity
+  #     entity: phone
+  # patient_cpf:
+  #   type: text
+  #   influence_conversation: true
+  #   mappings:
+  #   - type: from_entity
+  #     entity: cpf
+  patient_email:
     type: text
     influence_conversation: true
     mappings:
     - type: from_entity
-      entity: phone
-  patient_cpf:
-    type: text
-    influence_conversation: true
-    mappings:
-    - type: from_entity
-      entity: cpf
+      entity: email
   recommended_specialty:
     type: text
     influence_conversation: true
@@ -83,7 +95,7 @@ slots:
 
 responses:
   utter_greet:
-  - text: "Olá! Sou seu assistente para agendamento de consultas. Como posso ajudá-lo hoje?"
+  - text: "Olá! Sou a IA Aura. Como posso ajudá-lo hoje?"
 
   utter_ask_symptoms:
   - text: "Pode me descrever os sintomas que você está sentindo?"
@@ -97,6 +109,9 @@ responses:
   utter_ask_preferred_time:
   - text: "Que horário você prefere? (formato: HH:MM)"
 
+  utter_ask_symptoms_or_routine:
+  - text: "Você está com algum sintoma ou é apenas uma consulta de rotina?"
+
   utter_goodbye:
   - text: "Obrigado por usar nosso serviço! Tenha um ótimo dia!"
 
@@ -104,11 +119,11 @@ responses:
   utter_ask_patient_name:
   - text: "Qual é o seu nome completo?"
 
-  utter_ask_patient_phone:
-  - text: "Qual é o seu número de telefone?"
+  utter_ask_patient_email:
+  - text: "Qual é o seu email?"
 
-  utter_ask_patient_cpf:
-  - text: "Qual é o seu CPF?"
+  #utter_ask_patient_cpf:
+ # - text: "Qual é o seu CPF?"
 
   utter_ask_appointment_date:
   - text: "Em que data você gostaria de agendar? (DD/MM/AAAA)"
@@ -120,22 +135,25 @@ responses:
   utter_default:
   - text: "Desculpe, não entendi. Pode repetir?"
 
+
 actions:
   - action_analyze_symptoms
   - action_recommend_specialty
   - action_check_availability
   - action_schedule_appointment
   - action_confirm_appointment
+  #- action_set_has_symptoms
   - validate_appointment_form
 
 forms:
   appointment_form:
     required_slots:
       - patient_name
-      - patient_phone
-      - patient_cpf
+      - patient_email
+     # - patient_cpf
       - appointment_date
       - appointment_time
+
 
 session_config:
   session_expiration_time: 60

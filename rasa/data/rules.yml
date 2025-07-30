@@ -11,19 +11,41 @@ rules:
   - intent: goodbye
   - action: utter_goodbye
 
-- rule: Analisar sintomas
-  steps:
-  - intent: inform_symptoms
-  - action: action_analyze_symptoms
-  - action: action_recommend_specialty
-
-- rule: Ativar formulário de agendamento
-  condition:
-  - active_loop: null
+- rule: Iniciar agendamento
   steps:
   - intent: schedule_appointment
+  - action: utter_ask_symptoms_or_routine
+
+- rule: Agendamento com sintomas
+  steps:
+  - intent: inform_symptoms
+  # - action: action_set_symptoms_status
+  # - slot_was_set:
+  #     - has_symptoms: true
+  - action: action_analyze_symptoms
+  - action: action_recommend_specialty
   - action: appointment_form
   - active_loop: appointment_form
+
+- rule: Agendamento de rotina (sem sintomas)
+  steps:
+  - intent: deny_symptoms
+  # - action: action_set_symptoms_status
+  # - slot_was_set:
+  #     - has_symptoms: false
+  - action: appointment_form
+  - active_loop: appointment_form
+
+
+- rule: Enviar formulário de agendamento
+  condition:
+  - active_loop: appointment_form
+  steps:
+  - action: appointment_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: action_schedule_appointment
 
 - rule: Finalizar formulário
   condition:

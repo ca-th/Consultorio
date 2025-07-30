@@ -2,6 +2,9 @@ import google.generativeai as genai
 import os
 from typing import List, Dict, Any
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GeminiIntegration:
     def __init__(self):
@@ -24,21 +27,49 @@ class GeminiIntegration:
         2. Urgência (baixa, média, alta, emergência)
         3. Breve explicação da recomendação
         4. Cuidados imediatos se necessário
-        
-        Responda em formato JSON:
+
+        Responda em formato JSON (Sem markdown):
         {{
             "specialty": "especialidade",
             "urgency": "nível",
             "explanation": "explicação",
             "immediate_care": "cuidados ou null"
         }}
-        
-        IMPORTANTE: Esta é apenas uma orientação inicial. Sempre consulte um médico.
         """
-        
+        logger.debug(f"Sintomas: {symptoms_text}")
         try:
             response = self.model.generate_content(prompt)
-            result = json.loads(response.text)
+            logger.debug(f"Resposta bruta do Gemini: {response}")
+
+            if response.text:
+                
+                result_text = json.loads(response.text)
+                logger.debug(f"Conteúdo de response.text (antes da limpeza): '{result_text}'")
+
+                # --- A NOVA CORREÇÃO MAIS IMPORTANTE ESTÁ AQUI ---
+                # Remove as marcações de bloco de código Markdown
+                if result_text.startswith("```json"):
+                    result_text = result_text.replace("```json", "", 1) # Remove apenas a primeira ocorrência
+                if result_text.endswith("```"):
+                    result_text = result_text.rsplit("```", 1)[0] # Remove apenas a última ocorrência
+                
+                result_text = result_text.strip() # Remove quaisquer espaços em branco ou novas linhas extras
+
+                logger.debug(f"Conteúdo de response.text (APÓS limpeza): '{result_text}'")
+
+                result = json.loads(result_text)
+                logger.debug(f"Resposta formatada (JSON): {result}")
+
+            else:
+                logger.error("Gemini não retornou nenhum candidato (texto gerado vazio).")
+                if response.prompt_feedback:
+                    logger.error(f"Feedback do prompt do Gemini: {response.prompt_feedback.block_reason}")
+                    if response.prompt_feedback.safety_ratings:
+                        for rating in response.prompt_feedback.safety_ratings:
+                            logger.error(f"Segurança: Categoria='{rating.category}', Probabilidade='{rating.probability}'")
+                return {}
+
+            logger.debug(f"Resposta formatada: {result}")
             return result
         except Exception as e:
             print(f"Erro na análise de sintomas: {e}")
