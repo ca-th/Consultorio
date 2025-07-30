@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class GeminiIntegration:
     def __init__(self):
-        genai.configure(api_key="AIzaSyBeeRNkjOTkzsc7_sAgrrrOJdDdkJjzdug")
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
         self.model = genai.GenerativeModel('gemini-1.5-flash')
     
     def analyze_symptoms(self, symptoms: List[str]) -> Dict[str, Any]:
