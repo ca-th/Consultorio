@@ -10,9 +10,14 @@ nlu:
     - boa noite
     - hey
     - e aí
-    - oie 
+    - oie
     - beleza
-    - eae 
+    - eae
+    - tudo bem?
+    - como vai?
+    - salve
+    - oi tudo bem
+    - olá, como posso ajudar?
 
 - intent: inform_symptoms
   examples: |
@@ -26,6 +31,26 @@ nlu:
     - sinto [dor abdominal](symptom)
     - tenho [diarreia](symptom)
     - estou com [insônia](symptom)
+    - meus sintomas são [cansaço](symptom) e [dores musculares](symptom)
+    - estou com [garganta inflamada](symptom)
+    - sinto [tontura](symptom)
+    - tenho [azia](symptom) constante
+    - meu nariz está [escorrendo](symptom)
+    - estou com [coceira na pele](symptom)
+    - sinto uma [dor aguda no joelho](symptom)
+    - tenho [pressão alta](symptom) ultimamente
+    - sinto [dormência nos dedos](symptom)
+    - estou com [perda de apetite](symptom)
+    - sinto [cãibras](symptom)
+    - estou com [sensibilidade à luz](symptom)
+    - tenho [dificuldade para engolir](symptom)
+    - minha [pressão](symptom) está [alta](symptom)
+    - estou com [dor](symptom) e [inchaço](symptom)
+    - sinto [irritação nos olhos](symptom)
+    - estou [cansado](symptom) o tempo todo
+    - tenho [espirros](symptom) frequentes
+    - sinto [ardor ao urinar](symptom)
+    - estou com [inchaço nas pernas](symptom)
 
 - intent: schedule_appointment
   examples: |
@@ -34,15 +59,11 @@ nlu:
     - preciso de uma consulta
     - quero marcar com um médico
     - preciso agendar
-
-# - intent: provide_personal_info
-#   examples: |
-#     - meu nome é [João Silva](name)
-#     - sou [Maria Santos](name)
-#     - meu telefone é [(11) 99999-9999](phone)
-#     - telefone [(21) 88888-8888](phone)
-#     - cpf [123.456.789-00](cpf)
-#     - meu cpf é [987.654.321-11](cpf)
+    - pode agendar uma consulta pra mim?
+    - quero marcar um médico
+    - me ajude a marcar uma consulta
+    - agendar um horário
+    - marcar consulta
 
 - intent: affirm
   examples: |
@@ -53,7 +74,13 @@ nlu:
     - isso mesmo
     - perfeito
     - sim, isso mesmo
-
+    - com certeza
+    - pode ser
+    - de acordo
+    - afirmativo
+    - é isso
+    - sim, por favor
+    - claro que sim
 
 - intent: deny
   examples: |
@@ -62,14 +89,25 @@ nlu:
     - não é isso
     - errado
     - não está certo
+    - de jeito nenhum
+    - nem pensar
+    - não concordo
+    - claro que não
+    - de forma alguma
 
 - intent: goodbye
   examples: |
     - tchau
     - até logo
     - obrigado
+    - muito obrigado
     - valeu
     - bye
+    - adeus
+    - até mais
+    - estou indo
+    - até a próxima
+    - tenha um bom dia
 
 - intent: deny_symptoms
   examples: |
@@ -82,6 +120,9 @@ nlu:
     - não tenho sintomas agora
     - não, não estou
     - não, não tenho
+    - estou bem, obrigado
+    - não tenho nada
+    - só quero um check-up
 
 - intent: deny_appointment
   examples: |
@@ -91,3 +132,148 @@ nlu:
     - não estou interessado em agendar
     - não, obrigado
     - não, obrigada
+    - desisti de agendar
+    - não vou marcar agora
+    - talvez mais tarde
+    - prefiro não agendar
+
+- intent: affirm_appointment
+  examples: |
+    - sim, eu gostaria
+    - sim, por favor
+    - sim, eu quero agendar a consulta
+    - agende para mim
+    - quero agendar
+    - pode marcar
+    - sim, vamos agendar
+
+- intent: provide_name
+  examples: |
+    - meu nome é [Maria Rosa dos Santos](patient_name)
+    - pode me chamar de [João Silva](patient_name)
+    - [Maria](patient_name)
+    - sou [Ana Paula](patient_name)
+    - meu nome completo é [Pedro Henrique Souza](patient_name)
+    - meu nome é [Fulano de Tal](patient_name)
+    - [Laura](patient_name)
+    - [Carlos Eduardo](patient_name)
+    - me chamo [Isabela Cristina](patient_name)
+    - [Rafael](patient_name)
+
+- intent: provide_appointment_time
+  examples: |
+    - [18:00](appointment_time)
+    - às [10h](appointment_time)
+    - [duas da tarde](appointment_time)
+    - [15h30](appointment_time)
+    - [nove da manhã](appointment_time)
+    - às [18:00](appointment_time)
+    - [meio-dia](appointment_time)
+    - [uma e meia da tarde](appointment_time)
+    - [vinte e uma horas](appointment_time)
+    - por volta das [7h](appointment_time)
+    - [11 da noite](appointment_time)
+    - pode ser [agora](appointment_time)
+    - [amanhã de manhã](appointment_time)
+    - na [próxima semana](appointment_time)
+    - [terça-feira à tarde](appointment_time)
+    - dia [15 de agosto](appointment_time)
+    - [hoje](appointment_time)
+    - [amanhã](appointment_time)
+    - [depois de amanhã](appointment_time)
+    - na [quarta que vem](appointment_time)
+    - na [sexta](appointment_time)
+    - no dia [20/10](appointment_time)
+    - para o dia [3 de setembro](appointment_time)
+
+- intent: provide_appointment_date
+  examples: |
+    - [12/08/2025](appointment_date)
+    - gostaria de agendar para [amanhã](appointment_date)
+    - pode ser no dia [25 de dezembro](appointment_date)
+    - que tal [quarta-feira que vem](appointment_date)
+    - para [sexta](appointment_date)
+    - na [próxima segunda](appointment_date)
+    - dia [10/08/2025](appointment_date)
+    - [hoje à tarde](appointment_date)
+    - [amanhã de manhã](appointment_date)
+    - [depois de amanhã](appointment_date)
+    - pode marcar para [14 de fevereiro](appointment_date)
+    - no dia [31 de março](appointment_date)
+    - [semana que vem](appointment_date)
+    - no [sábado](appointment_date)
+    - agende para o [dia 5](appointment_date)
+    - para [o próximo mês](appointment_date)
+    - [agora](appointment_date)
+
+- intent: provide_patient_email
+  examples: |
+    - meu email é [joao.silva@exemplo.com](patient_email)
+    - pode me enviar para [maria@email.com.br](patient_email)
+    - meu contato é [contato@dominio.org](patient_email)
+    - é [meu.nome@mail.net](patient_email)
+    - [teste@gmail.com](patient_email)
+    - [abc@outlook.com](patient_email)
+    - o email é [info@empresa.com](patient_email)
+
+- intent: cancel
+  examples: |
+    - cancelar
+    - eu quero cancelar
+    - desisti
+    - não quero mais
+    - parar
+    - abortar
+    - esquece
+    - não, obrigado
+    - não, obrigada
+    - posso cancelar?
+    - por favor cancele
+    - pare
+    - desisto
+    - deixa pra lá
+    - não quero continuar
+    - para o que está fazendo
+
+- intent: specialty
+  examples: |
+    - quero uma consulta de [cardiologia](specialty)
+    - a especialidade é [pediatria](specialty)
+    - preciso de um [clínico geral](specialty)
+    - [dermatologia](specialty)
+    - para [ortopedia](specialty)
+    - é [neurologia](specialty)
+    - pode ser [ginecologia](specialty)
+    - qual a especialidade que você tem para [oftalmologia](specialty)?
+    - quero marcar com um [urologista](specialty)
+    - para [otorrinolaringologia](specialty)
+    - [pneumologia](specialty) por favor
+    - preciso de [endocrinologia](specialty)
+    - [gastroenterologia](specialty)
+    - [psiquiatria](specialty)
+    - [infectologia](specialty)
+    - [oncologia](specialty)
+    - [nefrologia](specialty)
+    - [reumatologia](specialty)
+    - [hematologia](specialty)
+    - [cirurgia geral](specialty)
+    - [cirurgia plástica](specialty)
+    - [cirurgia vascular](specialty)
+    - [cirurgia cardíaca](specialty)
+    - [neurocirurgia](specialty)
+    - [cirurgia torácica](specialty)
+    - [medicina de família e comunidade](specialty)
+    - [fisiatria](specialty)
+    - [geriatria](specialty)
+    - [nutrologia](specialty)
+    - [alergia e imunologia](specialty)
+    - [medicina intensiva](specialty)
+    - [angiologia](specialty)
+    - [coloproctologia](specialty)
+    - [genética médica](specialty)
+    - [medicina esportiva](specialty)
+    - [medicina do trabalho](specialty)
+    - preciso de um médico do [coração](specialty)
+    - meu problema é de [pele](specialty)
+    - preciso ver um médico para [crianças](specialty)
+    - qual especialista cuida de [ossos](specialty)?

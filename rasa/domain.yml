@@ -5,30 +5,27 @@ intents:
   - goodbye
   - affirm
   - deny
-  #- inform
   - inform_symptoms
   - deny_symptoms
   - schedule_appointment
   - deny_appointment
-  #- provide_personal_info
-  #- check_availability
-  #- cancel_appointment
-  #- ask_specialties
+  - provide_name
+  - provide_appointment_time
+  - provide_appointment_date
+  - provide_patient_email
+  - affirm_appointment
+  - specialty
+  - cancel
 
 entities:
   - symptom
   - specialty
-  - date
-  - time
-  - name
-  - email
+  - appointment_date
+  - appointment_time
+  - patient_name
+  - patient_email
 
 slots:
-  # has_symptoms:
-  #   type: bool
-  #   influence_conversation: true
-  #   mappings:
-  #     - type: custom
   symptoms:
     type: list
     influence_conversation: true
@@ -56,42 +53,35 @@ slots:
     influence_conversation: true
     mappings:
     - type: from_entity
-      entity: date
+      entity: appointment_date
+      intent: provide_appointment_date
   appointment_time:
     type: text
     influence_conversation: true
     mappings:
     - type: from_entity
-      entity: time
+      entity: appointment_time
+      intent: provide_appointment_time
   patient_name:
     type: text
     influence_conversation: true
     mappings:
     - type: from_entity
-      entity: name
-  # patient_phone:
-  #   type: text
-  #   influence_conversation: true
-  #   mappings:
-  #   - type: from_entity
-  #     entity: phone
-  # patient_cpf:
-  #   type: text
-  #   influence_conversation: true
-  #   mappings:
-  #   - type: from_entity
-  #     entity: cpf
+      entity: patient_name
+      intent: provide_name
   patient_email:
     type: text
     influence_conversation: true
     mappings:
     - type: from_entity
-      entity: email
+      entity: patient_email
+      intent: provide_patient_email
   recommended_specialty:
     type: text
     influence_conversation: true
     mappings:
     - type: custom
+      initial_value: null
 
 responses:
   utter_greet:
@@ -99,9 +89,6 @@ responses:
 
   utter_ask_symptoms:
   - text: "Pode me descrever os sintomas que você está sentindo?"
-
-  utter_ask_personal_info:
-  - text: "Para continuar com o agendamento, preciso de algumas informações:\\n- Nome completo\\n- Telefone\\n- CPF"
 
   utter_ask_preferred_date:
   - text: "Que data você gostaria para sua consulta? (formato: DD/MM/AAAA)"
@@ -112,6 +99,12 @@ responses:
   utter_ask_symptoms_or_routine:
   - text: "Você está com algum sintoma ou é apenas uma consulta de rotina?"
 
+  utter_ask_appointment_confirmation:
+  - text: "Você gostaria de agendar uma consulta de {recommended_specialty}?"
+
+  utter_ask_specialty:
+  - text: "Qual especialidade você gostaria de agendar?"
+
   utter_goodbye:
   - text: "Obrigado por usar nosso serviço! Tenha um ótimo dia!"
 
@@ -121,9 +114,6 @@ responses:
 
   utter_ask_patient_email:
   - text: "Qual é o seu email?"
-
-  #utter_ask_patient_cpf:
- # - text: "Qual é o seu CPF?"
 
   utter_ask_appointment_date:
   - text: "Em que data você gostaria de agendar? (DD/MM/AAAA)"
@@ -138,11 +128,9 @@ responses:
 
 actions:
   - action_analyze_symptoms
-  - action_recommend_specialty
-  - action_check_availability
   - action_schedule_appointment
   - action_confirm_appointment
-  #- action_set_has_symptoms
+  - action_handle_form_interruption
   - validate_appointment_form
 
 forms:
@@ -150,10 +138,9 @@ forms:
     required_slots:
       - patient_name
       - patient_email
-     # - patient_cpf
       - appointment_date
       - appointment_time
-
+      - specialty
 
 session_config:
   session_expiration_time: 60

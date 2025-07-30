@@ -5,9 +5,11 @@ from rasa_sdk.forms import FormValidationAction
 from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 import re
 import logging
 import json
+import dateparser as dt
 
 import phonenumbers
 from phonenumbers import geocoder, carrier
@@ -142,23 +144,6 @@ class ValidateAppointmentForm(FormValidationAction):
         dispatcher.utter_message(text="Por favor, informe um e-mail válido (ex: nome@exemplo.com).")
         return {"patient_email": None}
 
-    #def validate_patient_cpf(
-       # self,
-       # slot_value: Any,
-       # dispatcher: CollectingDispatcher,
-       # tracker: Tracker,
-       # domain: DomainDict,
-    #) -> Dict[Text, Any]:
-        
-       # if slot_value:
-            # Remove formatação
-           # cpf_digits = re.sub(r'\D', '', slot_value)
-           # if len(cpf_digits) == 11:
-             #   return {"patient_cpf": slot_value}
-        
-       # dispatcher.utter_message(text="Por favor, informe um CPF válido (ex: 123.456.789-00).")
-       # return {"patient_cpf": None}
-
     def validate_appointment_date(
         self,
         slot_value: Any,
@@ -167,21 +152,21 @@ class ValidateAppointmentForm(FormValidationAction):
         domain: DomainDict,
     ) -> Dict[Text, Any]:
         
-        if slot_value:
-            try:
-                # Tenta converter a data
-                date_obj = datetime.strptime(slot_value, "%d/%m/%Y")
-                # Verifica se a data não é no passado
-                if date_obj.date() >= datetime.now().date():
-                    return {"appointment_date": slot_value}
-                else:
-                    dispatcher.utter_message(text="A data deve ser hoje ou no futuro.")
-                    return {"appointment_date": None}
-            except ValueError:
-                dispatcher.utter_message(text="Por favor, informe a data no formato DD/MM/AAAA.")
+        try:
+            # Tenta converter qualquer formato para datetime.date
+            date_obj = dt.parse(slot_value, languages=["pt"], settings={"PREFER_DATES_FROM": "future"})
+
+            if date_obj >= datetime.now().date():
+                # Retorna data no formato brasileiro
+                return {"appointment_date": date_obj.strftime("%d/%m/%Y")}
+            else:
+                dispatcher.utter_message(text="A data deve ser hoje ou no futuro.")
                 return {"appointment_date": None}
-        
-        return {"appointment_date": None}
+
+        except Exception:
+            dispatcher.utter_message(text="Por favor, informe a data no formato DD/MM/AAAA.")
+            return {"appointment_date": None}
+
 
     def validate_appointment_time(
         self,
@@ -208,64 +193,35 @@ class ValidateAppointmentForm(FormValidationAction):
                 return {"appointment_time": None}
         
         return {"appointment_time": None}
-
-# class ActionSetHasSymptoms(Action):
-#     def name(self) -> str:
-#         return "action_set_has_symptoms"
-
-#     def run(self, dispatcher: CollectingDispatcher,
-#             tracker: Tracker,
-#             domain: dict):
-
-#         # Pega a última intent detectada
-#         last_intent = tracker.get_intent_of_latest_message()
-
-#         # Define o valor do slot com base na intent
-#         if last_intent == "inform_symptoms":
-#             return [SlotSet("has_symptoms", True)]
-#         elif last_intent == "deny_symptoms":
-#             return [SlotSet("has_symptoms", False)]
-#         else:
-#             return []
-
-class ActionRecommendSpecialty(Action):
-    def name(self) -> Text:
-        return "action_recommend_specialty"
-
-    def run(self, dispatcher: CollectingDispatcher,
+    
+    def validate_specialty(
+            self,
+            slot_value: Any, 
+            dispatcher: CollectingDispatcher,
             tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-        specialty = tracker.get_slot("recommended_specialty")
-        
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:  
+
+        if tracker.get_slot("recommended_specialty"):
+            specialty = tracker.get_slot("recommended_specialty")
+
+        especialidades = {"clínica geral": "Clínica Geral",
+                "clínico geral": "Clínica Geral",
+                "clinica geral": "Clínica Geral",
+                "clinico geral": "Clínica Geral",
+                "pediatria": "Pediatria",
+                "cardiologia": "Cardiologia",
+                "dermatologia": "Dermatologia"
+            }
         if specialty:
-            dispatcher.utter_message(text=f"Gostaria de agendar uma consulta com {specialty}?")
-        
-        return []
-
-class ActionCheckAvailability(Action):
-    def name(self) -> Text:
-        return "action_check_availability"
-
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-        # Simulação de verificação de disponibilidade
-        # Em produção, conectar com sistema de agendamento real
-        
-        specialty = tracker.get_slot("specialty")
-        date = tracker.get_slot("appointment_date")
-        
-        available_times = ["09:00", "10:30", "14:00", "15:30", "16:00"]
-        
-        message = f"Horários disponíveis para {specialty} no dia {date}:\n"
-        for time in available_times:
-            message += f"• {time}\n"
-        
-        dispatcher.utter_message(text=message)
-        
-        return []
+            if specialty.lower() in especialidades:
+                return {"specialty": especialidades[specialty.lower()]}
+            else:
+                dispatcher.utter_message(text=f"Desculpe, não temos a especialidade {specialty} no nosso consultório."
+                                         "Trabalhamos com: Clínica Geral, Pediatria, Cardiologia e Dermatologia"
+                                         "Qual dessas você gostaria?")
+                return {"specialty": None}
+        else: 
+            return {"specialty": None}
 
 class ActionScheduleAppointment(Action):
     def name(self) -> Text:
@@ -279,140 +235,50 @@ class ActionScheduleAppointment(Action):
         patient_data = {
             'name': tracker.get_slot("patient_name"),
             'phone': tracker.get_slot("patient_phone"),
-            'cpf': tracker.get_slot("patient_cpf"),
             'symptoms': tracker.get_slot("symptoms") or [],
-            'specialty': tracker.get_slot("specialty"),
+            'specialty': tracker.get_slot("specialty") or tracker.get_slot("recommended_specialty"),
             'date': tracker.get_slot("appointment_date"),
             'time': tracker.get_slot("appointment_time")
         }
         
-        # Aqui você salvaria no banco de dados
-        # save_appointment_to_database(patient_data)
-        
-        # Gera resumo com Gemini
-        gemini = GeminiIntegration()
-        summary = gemini.generate_appointment_summary(patient_data)
-        
         confirmation_message = f"""
-✅ **Consulta Agendada com Sucesso!**
+            ✅ **Consulta Agendada com Sucesso!**
 
-📋 **Detalhes:**
-- **Paciente:** {patient_data['name']}
-- **Especialidade:** {patient_data['specialty']}
-- **Data:** {patient_data['date']}
-- **Horário:** {patient_data['time']}
-- **Telefone:** {patient_data['phone']}
+            📋 **Detalhes:**
+            - **Paciente:** {patient_data['name']}
+            - **Especialidade:** {patient_data['specialty']}
+            - **Data:** {patient_data['date']}
+            - **Horário:** {patient_data['time']}
+            - **Telefone:** {patient_data['phone']}
 
-📱 **Próximos passos:**
-1. Você receberá SMS de confirmação
-2. Chegue 15 minutos antes do horário
-3. Traga documentos e exames anteriores
+            📱 **Próximos passos:**
+            1. Você receberá SMS de confirmação
+            2. Chegue 15 minutos antes do horário
+            3. Traga documentos e exames anteriores
 
-{summary}
+            Há algo a mais que eu possa ajudar?
         """
         
         dispatcher.utter_message(text=confirmation_message)
         
         return []
-
-class ValidateAppointmentForm(FormValidationAction):
+    
+class ActionHandleFormInterruption(Action):
     def name(self) -> Text:
-        return "validate_appointment_form"
+        return "action_handle_form_interruption"
 
-    def validate_patient_name(
+    def run(
         self,
-        slot_value: Any,
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        
-        if slot_value and len(slot_value) >= 2:
-            return {"patient_name": slot_value}
-        else:
-            dispatcher.utter_message(text="Por favor, informe um nome válido.")
-            return {"patient_name": None}
+        domain: Dict[Text, Any],
+    ) -> List[Dict[Text, Any]]:
 
-    def validate_patient_phone(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        
-        if slot_value:
-            # Remove formatação e verifica se tem pelo menos 10 dígitos
-            phone_digits = re.sub(r'\D', '', slot_value)
-            if len(phone_digits) >= 10:
-                return {"patient_phone": slot_value}
-        
-        dispatcher.utter_message(text="Por favor, informe um telefone válido (ex: (11) 99999-9999).")
-        return {"patient_phone": None}
+        dispatcher.utter_message(text="Ok, entendi. Cancelei o preenchimento do formulário."
+                                 "Há algo a mais que eu possa ajudar?")
 
-    def validate_patient_cpf(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        
-        if slot_value:
-            # Remove formatação
-            cpf_digits = re.sub(r'\D', '', slot_value)
-            if len(cpf_digits) == 11:
-                return {"patient_cpf": slot_value}
-        
-        dispatcher.utter_message(text="Por favor, informe um CPF válido (ex: 123.456.789-00).")
-        return {"patient_cpf": None}
-
-    def validate_appointment_date(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        
-        if slot_value:
-            try:
-                # Tenta converter a data
-                date_obj = datetime.strptime(slot_value, "%d/%m/%Y")
-                # Verifica se a data não é no passado
-                if date_obj.date() >= datetime.now().date():
-                    return {"appointment_date": slot_value}
-                else:
-                    dispatcher.utter_message(text="A data deve ser hoje ou no futuro.")
-                    return {"appointment_date": None}
-            except ValueError:
-                dispatcher.utter_message(text="Por favor, informe a data no formato DD/MM/AAAA.")
-                return {"appointment_date": None}
-        
-        return {"appointment_date": None}
-
-    def validate_appointment_time(
-        self,
-        slot_value: Any,
-        dispatcher: CollectingDispatcher,
-        tracker: Tracker,
-        domain: DomainDict,
-    ) -> Dict[Text, Any]:
-        
-        if slot_value:
-            try:
-                # Verifica formato HH:MM
-                time_obj = datetime.strptime(slot_value, "%H:%M")
-                hour = time_obj.hour
-                
-                # Verifica horário comercial (8h às 18h)
-                if 8 <= hour <= 18:
-                    return {"appointment_time": slot_value}
-                else:
-                    dispatcher.utter_message(text="Horário deve estar entre 08:00 e 18:00.")
-                    return {"appointment_time": None}
-            except ValueError:
-                dispatcher.utter_message(text="Por favor, informe o horário no formato HH:MM (ex: 14:30).")
-                return {"appointment_time": None}
-        
-        return {"appointment_time": None}
+        # Desativa o formulário explicitamente
+        # Você precisa saber o nome do formulário que está ativo, ex: 'appointment_form'
+        return [SlotSet("requested_slot", None), SlotSet("active_loop", None)]
+        # ActiveLoopSet(None) desativa qualquer loop ativo.
+        # SlotSet("requested_slot", None) limpa o slot que o formulário estava pedindo.

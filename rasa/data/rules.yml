@@ -19,25 +19,22 @@ rules:
 - rule: Agendamento com sintomas
   steps:
   - intent: inform_symptoms
-  # - action: action_set_symptoms_status
-  # - slot_was_set:
-  #     - has_symptoms: true
   - action: action_analyze_symptoms
-  - action: action_recommend_specialty
-  - action: appointment_form
-  - active_loop: appointment_form
+  - action: utter_ask_appointment_confirmation
 
 - rule: Agendamento de rotina (sem sintomas)
   steps:
   - intent: deny_symptoms
-  # - action: action_set_symptoms_status
-  # - slot_was_set:
-  #     - has_symptoms: false
   - action: appointment_form
   - active_loop: appointment_form
 
+- rule: Agendamento com sintomas confirmado
+  steps:
+  - intent: affirm_appointment
+  - action: appointment_form
+  - active_loop: appointment_form
 
-- rule: Enviar formulário de agendamento
+- rule: Enviar formulário
   condition:
   - active_loop: appointment_form
   steps:
@@ -47,12 +44,8 @@ rules:
     - requested_slot: null
   - action: action_schedule_appointment
 
-- rule: Finalizar formulário
-  condition:
-  - active_loop: appointment_form
+- rule: Interromper formulário quando usuário cancelar
   steps:
-  - action: appointment_form
-  - active_loop: null
-  - slot_was_set:
-    - requested_slot: null
-  - action: action_schedule_appointment
+    - intent: cancel  # Condição: Usuário expressa a intenção 'cancel'
+    - active_loop:    # Condição: Um formulário está ativo
+    - action: action_handle_form_interruption # **Ação:** Chama sua ação personalizada para lidar com o cancelamento
