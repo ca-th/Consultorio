@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 import requests
-from Backend import schemas  # ajuste o caminho conforme sua estrutura
+from Backend import schemas  
 
+#usario e rasa
 router = APIRouter()
 
 RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
@@ -9,7 +10,7 @@ RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
 @router.post("/chat", response_model=schemas.ChatResponse)
 async def chat_with_rasa(chat_message: schemas.ChatMessage):
     payload = {
-        "sender": "usuario123",  # pode ser dinâmico
+        "sender": "usuario123", 
         "message": chat_message.message
     }
 

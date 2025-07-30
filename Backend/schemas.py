@@ -3,8 +3,7 @@ from datetime import datetime
 
 class Usuario(BaseModel):
     nome: str
-    cpf: str
-    telefone: str
+    email:str
 
 class Medico(BaseModel):
     nome: str
