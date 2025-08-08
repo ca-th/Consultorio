@@ -1,0 +1,51 @@
+version: "3.1"
+
+rules:
+- rule: Cumprimentar sempre
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- rule: Despedir sempre
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- rule: Iniciar agendamento
+  steps:
+  - intent: schedule_appointment
+  - action: utter_ask_symptoms_or_routine
+
+- rule: Agendamento com sintomas
+  steps:
+  - intent: inform_symptoms
+  - action: action_analyze_symptoms
+  - action: utter_ask_appointment_confirmation
+
+- rule: Agendamento de rotina (sem sintomas)
+  steps:
+  - intent: deny_symptoms
+  - action: appointment_form
+  - active_loop: appointment_form
+
+- rule: Agendamento com sintomas confirmado
+  steps:
+  - intent: affirm_appointment
+  - action: appointment_form
+  - active_loop: appointment_form
+
+- rule: Enviar formulário
+  condition:
+  - active_loop: appointment_form
+  steps:
+  - action: appointment_form
+  - active_loop: null
+  - slot_was_set:
+    - requested_slot: null
+  - action: action_schedule_appointment
+
+- rule: Interromper formulário quando usuário cancelar
+  steps:
+    - intent: cancel  # Condição: Usuário expressa a intenção 'cancel'
+    - active_loop:    # Condição: Um formulário está ativo
+    - action: action_handle_form_interruption # **Ação:** Chama sua ação personalizada para lidar com o cancelamento

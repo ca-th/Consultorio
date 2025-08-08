@@ -114,26 +114,22 @@ python -m venv venv_py
 .\venv\Scripts\activate ou source venv_py/Scripts/activate(recomendado)
 
 #Instalação das Bibilotecas
-pip install rasa google-generativeai pytz regex 
+pip install -r requirements.txt
 
 # Atualize o pip pra versão mais recente
 python -m pip install --upgrade pip
 
+# Ativa a API
+rasa run --enable-api --cors "*" --debug
+
+#Abra outro terminal e entra na venv
 #Rodar o rasa
-python -m rasa train
+python -m rasa run actions
 
-# Ative a licença (vc tem que criar uma)
-# macOS e Linux
-export GEMINI_PRO_LICENSE=YOUR_LICENSE_KEY
-
-# Windows
-set GEMINI_PRO_LICENSE=YOUR_LICENSE_KEY
-
-# Quando finalizar o treinamento, rode o comando:
-rasa shell (onde vai abrir o chat)
-
-# Por fim, abre outro terminal, entre na pasta rasa e ative o ambiente e rode o comando:
-rasa run actions (criar um ambiente separado: python -m venv .venv-core, source .venv-core/Scripts/activate,  python -m pip install --upgrade pip. ai roda o comando)
+#Abra outro terminal e entre na venv 
+cd ..
+cd Frontend
+cd projeto-react
 
 ##IMPORTANTE: 
 

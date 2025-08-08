@@ -1,51 +1,17 @@
 version: "3.1"
 
 stories:
-- story: agendamento completo
+
+- story: Início do agendamento
   steps:
   - intent: greet
   - action: utter_greet
   - intent: schedule_appointment
-  - action: utter_ask_symptoms
-  - intent: inform_symptoms
-  - action: action_analyze_symptoms
-  - action: action_recommend_specialty
-  - action: appointment_form
-  - active_loop: appointment_form
-  - slot_was_set:
-    - requested_slot: patient_name
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_name: João Silva
-  - slot_was_set:
-    - requested_slot: patient_phone
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_phone: (11) 99999-9999
-  - slot_was_set:
-    - requested_slot: patient_cpf
-  - intent: provide_personal_info
-  - slot_was_set:
-    - patient_cpf: 123.456.789-00
-  - slot_was_set:
-    - requested_slot: appointment_date
-  - intent: inform
-  - slot_was_set:
-    - appointment_date: 15/12/2024
-  - slot_was_set:
-    - requested_slot: appointment_time
-  - intent: inform
-  - slot_was_set:
-    - appointment_time: 14:00
-  - slot_was_set:
-    - requested_slot: null
-  - active_loop: null
-  - action: action_schedule_appointment
-  - intent: goodbye
-  - action: utter_goodbye
+  - action: utter_ask_symptoms_or_routine
 
-- story: apenas sintomas
+- story: Agendamento direto
   steps:
+<<<<<<< HEAD
   - intent: greet
   - action: utter_greet
   - intent: inform_symptoms
@@ -54,3 +20,7 @@ stories:
   - intent: affirm
   - action: utter_ask_personal_info
   
+=======
+  - intent: schedule_appointment
+  - action: utter_ask_symptoms_or_routine
+>>>>>>> 82d6ab6d3b501148c3f1595381a227ad533975c9
