@@ -6,9 +6,13 @@ from rasa_sdk.types import DomainDict
 from rasa_sdk.events import SlotSet
 from datetime import datetime, timedelta
 import re
+import logging
 
 from .gemini_integration import GeminiIntegration
         
+
+logger = logging.getLogger(__name__)
+
 class ActionAnalyzeSymptoms(Action):
     def name(self) -> Text:
         return "action_analyze_symptoms"
@@ -18,129 +22,82 @@ class ActionAnalyzeSymptoms(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
         symptoms = tracker.get_slot("symptoms") or []
+        logger.info(f"Analisando sintomas: {symptoms}")
         
+        # Validação inicial
         if not symptoms:
             dispatcher.utter_message(text="Não consegui identificar sintomas específicos. Pode descrevê-los novamente?")
             return []
         
-        gemini = GeminiIntegration()
-        analysis = gemini.analyze_symptoms(symptoms)
-        
-        urgency_messages = {
-            "emergência": "⚠️ ATENÇÃO: Seus sintomas podem indicar urgência médica. Procure atendimento imediato!",
-            "alta": "⚠️ Recomendamos buscar atendimento médico hoje mesmo.",
-            "média": "Recomendamos agendar consulta nos próximos dias.",
-            "baixa": "Você pode agendar uma consulta de rotina."
-        }
-        
-        message = f"""
-            Análise dos seus sintomas:
+        try:
+            # Sua integração com Gemini
+            gemini = GeminiIntegration()
+            analysis = gemini.analyze_symptoms(symptoms)
+            
+            # Validação da resposta do Gemini
+            if not analysis or not analysis.get('specialty'):
+                raise ValueError("Gemini retornou análise inválida ou vazia")
+            
+            # Verificar se tem erro na resposta
+            if analysis.get('specialty', '').lower() in ['indefinida', 'erro', 'error', '']:
+                raise ValueError(f"Gemini retornou specialty inválida: {analysis.get('specialty')}")
+            
+            # Mapear mensagens de urgência
+            urgency_messages = {
+                "emergência": "⚠️ ATENÇÃO: Seus sintomas podem indicar urgência médica. Procure atendimento imediato!",
+                "alta": "⚠️ Recomendamos buscar atendimento médico hoje mesmo.",
+                "média": "Recomendamos agendar consulta nos próximos dias.",
+                "baixa": "Você pode agendar uma consulta de rotina."
+            }
+            
+            # Montar mensagem de resposta
+            message = f"""
+Análise dos seus sintomas:
 
-            🔹 **Especialidade recomendada:** {analysis['specialty']}
-            🔹 **Urgência:** {analysis['urgency']}
-            🔹 **Orientação:** {analysis['explanation']}
+🔹 **Especialidade recomendada:** {analysis['specialty']}
+🔹 **Urgência:** {analysis['urgency']}
+🔹 **Orientação:** {analysis['explanation']}
 
-            {urgency_messages.get(analysis['urgency'], '')}
-        """
-        
-        if analysis.get('immediate_care'):
-            message += f"\n\n**Cuidados imediatos:** {analysis['immediate_care']}"
-        
-        dispatcher.utter_message(text=message)
-        
-        return [
-            SlotSet("recommended_specialty", analysis['specialty']),
-            SlotSet("specialty", analysis['specialty']), # Se você usa 'specialty' em outro lugar, pode preencher ambos
-            SlotSet("symptoms_urgency", analysis['urgency']), # Opcional: para usar a urgência em outras regras/histórias
-            SlotSet("symptoms_explanation", analysis['explanation']) # Opcional: para referência futura
-        ]
+{urgency_messages.get(analysis['urgency'], '')}
+            """
+            
+            if analysis.get('immediate_care'):
+                message += f"\n\n**Cuidados imediatos:** {analysis['immediate_care']}"
+            
+            dispatcher.utter_message(text=message)
+            
+            return [
+                SlotSet("recommended_specialty", analysis['specialty']),
+                SlotSet("specialty", analysis['specialty']),
+                SlotSet("symptoms_urgency", analysis['urgency']),
+                SlotSet("symptoms_explanation", analysis['explanation'])
+            ]
+            
+        except Exception as e:
+            # Log detalhado do erro para debug
+            logger.error(f"ERRO na análise Gemini: {str(e)}")
+            logger.error(f"Sintomas recebidos: {symptoms}")
+            logger.error(f"Tipo do erro: {type(e).__name__}")
+            
+            # Resposta de fallback amigável que mantém o fluxo
+            symptoms_text = ', '.join(symptoms) if isinstance(symptoms, list) else str(symptoms)
+            
+            dispatcher.utter_message(text=f"""
+Entendi que você tem: {symptoms_text}
 
-class ActionRecommendSpecialty(Action):
-    def name(self) -> Text:
-        return "action_recommend_specialty"
+No momento estou com dificuldades técnicas para fazer a análise automática. 
+Vamos agendar uma consulta com um **Clínico Geral** que poderá avaliar adequadamente seus sintomas.
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-        specialty = tracker.get_slot("recommended_specialty")
-        
-        if specialty:
-            dispatcher.utter_message(text=f"Gostaria de agendar uma consulta com {specialty}?")
-        
-        return []
-
-class ActionCheckAvailability(Action):
-    def name(self) -> Text:
-        return "action_check_availability"
-
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-        # Simulação de verificação de disponibilidade
-        # Em produção, conectar com sistema de agendamento real
-        
-        specialty = tracker.get_slot("specialty")
-        date = tracker.get_slot("appointment_date")
-        
-        available_times = ["09:00", "10:30", "14:00", "15:30", "16:00"]
-        
-        message = f"Horários disponíveis para {specialty} no dia {date}:\n"
-        for time in available_times:
-            message += f"• {time}\n"
-        
-        dispatcher.utter_message(text=message)
-        
-        return []
-
-class ActionScheduleAppointment(Action):
-    def name(self) -> Text:
-        return "action_schedule_appointment"
-
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-        # Coleta dados do agendamento
-        patient_data = {
-            'name': tracker.get_slot("patient_name"),
-            'phone': tracker.get_slot("patient_phone"),
-            'cpf': tracker.get_slot("patient_cpf"),
-            'symptoms': tracker.get_slot("symptoms") or [],
-            'specialty': tracker.get_slot("specialty"),
-            'date': tracker.get_slot("appointment_date"),
-            'time': tracker.get_slot("appointment_time")
-        }
-        
-        # Aqui você salvaria no banco de dados
-        # save_appointment_to_database(patient_data)
-        
-        # Gera resumo com Gemini
-        gemini = GeminiIntegration()
-        summary = gemini.generate_appointment_summary(patient_data)
-        
-        confirmation_message = f"""
-✅ **Consulta Agendada com Sucesso!**
-
-📋 **Detalhes:**
-- **Paciente:** {patient_data['name']}
-- **Especialidade:** {patient_data['specialty']}
-- **Data:** {patient_data['date']}
-- **Horário:** {patient_data['time']}
-- **Telefone:** {patient_data['phone']}
-
-📱 **Próximos passos:**
-1. Você receberá SMS de confirmação
-2. Chegue 15 minutos antes do horário
-3. Traga documentos e exames anteriores
-
-{summary}
-        """
-        
-        dispatcher.utter_message(text=confirmation_message)
-        
-        return []
+Posso prosseguir com o agendamento?
+            """)
+            
+            # Retorna slots válidos mesmo com erro - NÃO quebra o fluxo
+            return [
+                SlotSet("recommended_specialty", "Clínico Geral"),
+                SlotSet("specialty", "Clínico Geral"),
+                SlotSet("symptoms_urgency", "média"),
+                SlotSet("symptoms_explanation", "Consulta recomendada devido a indisponibilidade temporária da análise automática.")
+            ]
 
 class ValidateAppointmentForm(FormValidationAction):
     def name(self) -> Text:

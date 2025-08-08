@@ -24,20 +24,18 @@ entities:
 
 slots:
   symptoms:
-    type: list
-    mappings:
-    - type: from_entity
-      entity: symptom
-  specialty:
     type: text
     mappings:
-    - type: from_entity
-      entity: specialty
+      - type: from_entity
+        entity: symptom
+      - type: from_entity
+        entity: specialty
+
   symptoms_urgency:
     type: text
-    influence_conversation: true
     mappings:
-    - type: custom
+      - type: from_entity
+        entity: symptoms_urgency
   symptoms_explanation:
     type: text
     influence_conversation: false
